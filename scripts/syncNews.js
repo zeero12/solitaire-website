@@ -10,7 +10,13 @@ if (!serviceAccountBase64) {
   process.exit(1);
 }
 
-const serviceAccount = JSON.parse(Buffer.from(serviceAccountBase64, 'base64').toString('utf8'));
+const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT;
+if (!serviceAccountRaw) {
+  console.error('FIREBASE_SERVICE_ACCOUNT environment variable is missing.');
+  process.exit(1);
+}
+
+const serviceAccount = JSON.parse(serviceAccountRaw);
 
 if (!admin.apps.length) {
   admin.initializeApp({
