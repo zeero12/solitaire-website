@@ -24,9 +24,9 @@ export const sources = [
     name: "SEBI Press Releases",
     url: "https://www.sebi.gov.in/sebirss.jsp?key=pr",
     category: "Regulatory",
-    priority: 7,
+    priority: 10,
     enabled: true
-  }
+  },
   // ── NEW SOURCES BELOW ──────────────────────────────
   {
     name: "Business Standard Markets",
