@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Menu, Phone, Mail, Instagram, Linkedin, Shield, MapPin, Apple, Play, Target, ShieldCheck, TrendingUp } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Menu, Phone, Mail, Instagram, Linkedin, Shield, MapPin, Target, ShieldCheck, TrendingUp } from 'lucide-react';
 import BookingModal from './components/BookingModal';
 import ScrollToTop from './components/ScrollToTop';
 import WealthManagement from './pages/WealthManagement';
@@ -159,6 +159,11 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
                     </div>
                   )}
                   <div>
+                    {item.badge && (
+                      <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold border border-brand-gold/30 mb-1 inline-block">
+                        {item.badge}
+                      </span>
+                    )}
                     <p className="text-white/60 text-xs uppercase">{item.source || item.category || 'NEWS'}</p>
                     <p className="text-white text-sm font-medium line-clamp-2">{item.title}</p>
                   </div>
@@ -383,14 +388,14 @@ const Footer = () => (
           <h3 className="text-lg font-semibold mb-6">Download Our App</h3>
           <div className="flex flex-col gap-3">
             <a href="https://apps.apple.com/us/app/solitaire-financial-solutions/id1286413858" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-4 py-2.5 transition-colors w-fit">
-              <Apple className="w-6 h-6" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" className="w-6 h-6 brightness-0 invert" alt="Apple logo" />
               <div className="flex flex-col">
                 <span className="text-[10px] leading-none text-gray-400 mb-1">Download on the</span>
                 <span className="text-sm font-semibold leading-none text-white">App Store</span>
               </div>
             </a>
             <a href="https://play.google.com/store/apps/details?id=com.M2M.SolitaireFinancialSolution" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-4 py-2.5 transition-colors w-fit">
-              <Play className="w-5 h-5 ml-0.5 mr-0.5" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" className="w-6 h-6" alt="Google Play logo" />
               <div className="flex flex-col">
                 <span className="text-[10px] leading-none text-gray-400 mb-1">GET IT ON</span>
                 <span className="text-sm font-semibold leading-none text-white">Google Play</span>
