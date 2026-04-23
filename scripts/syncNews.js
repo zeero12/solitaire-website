@@ -4,12 +4,7 @@ import { sources } from './sources.js';
 import { isFinanceRelevant } from './filter.js';
 import { normalizeItem } from './normalize.js';
 
-const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT;
-if (!serviceAccountBase64) {
-  console.error('FIREBASE_SERVICE_ACCOUNT environment variable is missing.');
-  process.exit(1);
-}
-
+// ── Environment Variable Check ─────────────────────────────────
 const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT;
 if (!serviceAccountRaw) {
   console.error('FIREBASE_SERVICE_ACCOUNT environment variable is missing.');
@@ -18,6 +13,7 @@ if (!serviceAccountRaw) {
 
 const serviceAccount = JSON.parse(serviceAccountRaw);
 
+// ── Firebase Init ──────────────────────────────────────────────
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -27,10 +23,84 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const parser = new Parser();
 
+// ── Constants ──────────────────────────────────────────────────
+const POOL_MAX = 30;      // maximum items kept in Firestore at any time
+const FETCH_MAX = 20;     // maximum new items fetched per sync run
+
+// ── Pool Update Function ───────────────────────────────────────
+async function updateFirestorePool(newItems) {
+  const heroNewsRef = db.collection('heroNews');
+
+  // Fetch existing pool from Firestore
+  const existingSnapshot = await heroNewsRef.get();
+  const existingItems = existingSnapshot.docs.map(doc => ({
+    docId: doc.id,
+    ...doc.data()
+  }));
+
+  // Find genuinely new items not already in pool
+  const existingIds = new Set(existingItems.map(item => item.id));
+  const brandNewItems = newItems.filter(item => !existingIds.has(item.id));
+
+  if (brandNewItems.length === 0) {
+    console.log('No new items to add — pool unchanged.');
+
+    // Still update metadata timestamp
+    await db.collection('systemMeta').doc('heroNews').set({
+      lastSync: new Date().toISOString(),
+      itemCount: existingItems.length,
+      newItemsAdded: 0,
+      oldItemsRemoved: 0,
+      status: 'success'
+    });
+    return;
+  }
+
+  // Calculate how many old items to remove to stay within POOL_MAX
+  const totalAfterAdd = existingItems.length + brandNewItems.length;
+  const removeCount = Math.max(0, totalAfterAdd - POOL_MAX);
+
+  // Sort existing by createdAt ascending — oldest first for removal
+  const sortedExisting = [...existingItems].sort(
+    (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+  );
+  const docsToRemove = sortedExisting.slice(0, removeCount);
+
+  // Build and commit batch
+  const batch = db.batch();
+
+  // Delete only the oldest overflow items
+  docsToRemove.forEach(item => {
+    batch.delete(heroNewsRef.doc(item.docId));
+  });
+
+  // Add only genuinely new items
+  brandNewItems.forEach(item => {
+    batch.set(heroNewsRef.doc(item.id), item);
+  });
+
+  // Update metadata
+  const finalPoolSize = Math.min(totalAfterAdd, POOL_MAX);
+  const metaRef = db.collection('systemMeta').doc('heroNews');
+  batch.set(metaRef, {
+    lastSync: new Date().toISOString(),
+    itemCount: finalPoolSize,
+    newItemsAdded: brandNewItems.length,
+    oldItemsRemoved: removeCount,
+    status: 'success'
+  });
+
+  await batch.commit();
+  console.log(
+    `Pool updated — added ${brandNewItems.length} new, removed ${removeCount} old, pool size: ${finalPoolSize}`
+  );
+}
+
+// ── Main Sync Function ─────────────────────────────────────────
 async function syncNews() {
   let allItems = [];
-  let status = 'success';
 
+  // Fetch and process all enabled sources
   for (const source of sources) {
     if (!source.enabled) continue;
 
@@ -49,8 +119,8 @@ async function syncNews() {
       }
       console.log(`Successfully processed ${count} items from ${source.name}`);
     } catch (error) {
-      console.error(`Error processing source ${source.name}:`, error);
-      status = 'error';
+      console.error(`Error processing source ${source.name}:`, error.message);
+      // Do not exit — continue processing remaining sources
     }
   }
 
@@ -61,55 +131,39 @@ async function syncNews() {
     if (!uniqueItemsMap.has(key)) {
       uniqueItemsMap.set(key, item);
     } else {
-      // Keep the one with higher priority or newer publishedAt
+      // Keep higher priority item, or newer if same priority
       const existing = uniqueItemsMap.get(key);
-      if (item.priority > existing.priority || (item.priority === existing.priority && new Date(item.publishedAt) > new Date(existing.publishedAt))) {
+      const isHigherPriority = item.priority > existing.priority;
+      const isSamePriorityNewer =
+        item.priority === existing.priority &&
+        new Date(item.publishedAt) > new Date(existing.publishedAt);
+      if (isHigherPriority || isSamePriorityNewer) {
         uniqueItemsMap.set(key, item);
       }
     }
   }
 
-  let uniqueItems = Array.from(uniqueItemsMap.values());
+  const uniqueItems = Array.from(uniqueItemsMap.values());
 
   // Sort by priority descending, then publishedAt descending
   uniqueItems.sort((a, b) => {
-    if (b.priority !== a.priority) {
-      return b.priority - a.priority;
-    }
+    if (b.priority !== a.priority) return b.priority - a.priority;
     return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
   });
 
-  // Changed from 15 to 20
-  const topItems = uniqueItems.slice(0, 20);
+  // Take top items from this sync run
+  const topItems = uniqueItems.slice(0, FETCH_MAX);
 
+  if (topItems.length === 0) {
+    console.log('No relevant items found in this sync run — pool unchanged.');
+    return;
+  }
+
+  // Update the rolling pool in Firestore
   try {
-    const batch = db.batch();
-    const heroNewsRef = db.collection('heroNews');
-
-    // Delete existing docs first
-    const existingDocs = await heroNewsRef.get();
-    existingDocs.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-
-    // Write new ones
-    for (const item of topItems) {
-      const docRef = heroNewsRef.doc(item.id);
-      batch.set(docRef, item);
-    }
-
-    // Write metadata
-    const metaRef = db.collection('systemMeta').doc('heroNews');
-    batch.set(metaRef, {
-      lastSync: new Date().toISOString(),
-      itemCount: topItems.length,
-      status
-    });
-
-    await batch.commit();
-    console.log(`Successfully synced ${topItems.length} news items to Firestore.`);
+    await updateFirestorePool(topItems);
   } catch (error) {
-    console.error('Error writing to Firestore:', error);
+    console.error('Error updating Firestore pool:', error);
     process.exit(1);
   }
 }
