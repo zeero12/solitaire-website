@@ -79,8 +79,8 @@ async function syncNews() {
     return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
   });
 
-  // Keep top 15 items only
-  const topItems = uniqueItems.slice(0, 15);
+  // Changed from 15 to 20
+  const topItems = uniqueItems.slice(0, 20);
 
   try {
     const batch = db.batch();
