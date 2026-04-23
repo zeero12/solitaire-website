@@ -94,4 +94,6 @@ export async function getHeroNews() {
   } catch (error) {
     // Firestore unreachable — return full fallback set
     console.error('Error fetching hero news — using fallback cards:', error);
-    return FALLBACK_CARDS.slice(0, TARGET_DISP
+    return FALLBACK_CARDS.slice(0, TARGET_DISPLAY_COUNT);
+  }
+}
