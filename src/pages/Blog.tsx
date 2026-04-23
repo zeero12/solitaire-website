@@ -1,41 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Calendar, User } from 'lucide-react';
 import ServiceHero from '../components/ServiceHero';
-
-// Mock data for initial blogs if local storage is empty
-const defaultBlogs = [
-  {
-    id: '1',
-    title: 'Understanding the New Tax Regimes in India',
-    excerpt: 'A comprehensive guide to navigating the old vs. new tax regimes and making the best choice for your financial situation.',
-    content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    date: '2026-04-01',
-    author: 'Vishal Dalal',
-    imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    id: '2',
-    title: 'Why SIP is the Best Way to Build Long-Term Wealth',
-    excerpt: 'Discover the power of compounding and why Systematic Investment Plans (SIPs) are the cornerstone of successful wealth creation.',
-    content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-    date: '2026-03-15',
-    author: 'Vishal Dalal',
-    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=800&auto=format&fit=crop'
-  }
-];
+import { fetchBlogs } from '../firebase';
 
 export default function Blog() {
-  const [blogs, setBlogs] = useState(defaultBlogs);
+  const [blogs, setBlogs] = useState<any[]>([]);
   const [selectedBlog, setSelectedBlog] = useState<any | null>(null);
 
   useEffect(() => {
-    // Load blogs from local storage to sync with Admin Dashboard
-    const storedBlogs = localStorage.getItem('solitaire_blogs');
-    if (storedBlogs) {
-      setBlogs(JSON.parse(storedBlogs));
-    } else {
-      localStorage.setItem('solitaire_blogs', JSON.stringify(defaultBlogs));
-    }
+    fetchBlogs().then(fetchedBlogs => {
+      setBlogs(fetchedBlogs);
+    });
   }, []);
 
   if (selectedBlog) {

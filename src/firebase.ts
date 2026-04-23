@@ -9,7 +9,8 @@ import {
   orderBy,
   serverTimestamp,
   doc,
-  updateDoc
+  updateDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import {
   getAuth,
@@ -161,3 +162,58 @@ export const onAuthChange = (callback: (user: any) => void) => {
   }
   return onAuthStateChanged(auth, callback);
 };
+
+// ─── Blog Functions ───────────────────────────────────────────
+
+export const fetchBlogs = async () => {
+  if (isDemo || !db) return [];
+  try {
+    const q = query(collection(db, 'blogs'), orderBy('date', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Firebase fetchBlogs error:", error);
+    return [];
+  }
+};
+
+export const addBlog = async (blogData: any) => {
+  if (isDemo || !db) return { success: false, error: 'Firebase is not configured.' };
+  try {
+    const docRef = await addDoc(collection(db, 'blogs'), {
+      ...blogData,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp()
+    });
+    return { success: true, id: docRef.id };
+  } catch (error: any) {
+    console.error("Firebase addBlog error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const updateBlog = async (blogId: string, blogData: any) => {
+  if (isDemo || !db) return { success: false, error: 'Firebase is not configured.' };
+  try {
+    await updateDoc(doc(db, 'blogs', blogId), {
+      ...blogData,
+      updated_at: serverTimestamp()
+    });
+    return { success: true };
+  } catch (error: any) {
+    console.error("Firebase updateBlog error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const deleteBlog = async (blogId: string) => {
+  if (isDemo || !db) return { success: false, error: 'Firebase is not configured.' };
+  try {
+    await deleteDoc(doc(db, 'blogs', blogId));
+    return { success: true };
+  } catch (error: any) {
+    console.error("Firebase deleteBlog error:", error);
+    return { success: false, error: error.message };
+  }
+};
+

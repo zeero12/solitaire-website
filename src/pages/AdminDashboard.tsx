@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Clock, Calendar, User, Phone, Info, Shield, Bell, FileText, Plus, Trash2, LogOut, Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { subscribeToBookings, updateBookingStatus, adminLogin, adminLogout, onAuthChange } from '../firebase';
+import { subscribeToBookings, updateBookingStatus, adminLogin, adminLogout, onAuthChange, fetchBlogs, addBlog, updateBlog, deleteBlog } from '../firebase';
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -53,18 +53,16 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, [user]);
 
-  // Blogs logic (local storage for now as per original)
+  // Blogs logic
   useEffect(() => {
-    const storedBlogs = localStorage.getItem('solitaire_blogs');
-    if (storedBlogs) {
-      setBlogs(JSON.parse(storedBlogs));
+    if (user) {
+      fetchBlogs().then(fetchedBlogs => {
+        setBlogs(fetchedBlogs);
+      });
+    } else {
+      setBlogs([]);
     }
-  }, []);
-
-  const saveBlogs = (updatedBlogs: any[]) => {
-    setBlogs(updatedBlogs);
-    localStorage.setItem('solitaire_blogs', JSON.stringify(updatedBlogs));
-  };
+  }, [user]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +79,7 @@ export default function AdminDashboard() {
     await adminLogout();
   };
 
-  const handleSaveBlog = (e: React.FormEvent) => {
+  const handleSaveBlog = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBlog.title || !newBlog.content) {
       showNotification('Title and Content are required.');
@@ -89,20 +87,28 @@ export default function AdminDashboard() {
     }
     
     if (editingBlogId) {
-      const updatedBlogs = blogs.map(b => 
-        b.id === editingBlogId ? { ...b, ...newBlog } : b
-      );
-      saveBlogs(updatedBlogs);
-      showNotification('Blog post updated successfully.');
+      const result = await updateBlog(editingBlogId, newBlog);
+      if (result.success) {
+        setBlogs(blogs.map(b => 
+          b.id === editingBlogId ? { ...b, ...newBlog } : b
+        ));
+        showNotification('Blog post updated successfully.');
+      } else {
+        showNotification(`Error: ${result.error}`);
+      }
     } else {
-      const blog = {
-        id: Date.now().toString(),
+      const blogData = {
         ...newBlog,
         date: new Date().toISOString().split('T')[0],
         author: 'Admin'
       };
-      saveBlogs([blog, ...blogs]);
-      showNotification('Blog post published successfully.');
+      const result = await addBlog(blogData);
+      if (result.success) {
+        setBlogs([{ id: result.id, ...blogData }, ...blogs]);
+        showNotification('Blog post published successfully.');
+      } else {
+        showNotification(`Error: ${result.error}`);
+      }
     }
     
     setNewBlog({ title: '', excerpt: '', content: '', imageUrl: '' });
@@ -127,10 +133,15 @@ export default function AdminDashboard() {
     setShowBlogForm(false);
   };
 
-  const handleDeleteBlog = (id: string) => {
+  const handleDeleteBlog = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this blog post?')) {
-      saveBlogs(blogs.filter(b => b.id !== id));
-      showNotification('Blog post deleted.');
+      const result = await deleteBlog(id);
+      if (result.success) {
+        setBlogs(blogs.filter(b => b.id !== id));
+        showNotification('Blog post deleted.');
+      } else {
+        showNotification(`Error: ${result.error}`);
+      }
     }
   };
 
