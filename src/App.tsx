@@ -351,9 +351,11 @@ const Footer = () => (
               <MapPin className="w-5 h-5" />
             </a>
             <p className="text-sm text-gray-300 leading-relaxed">
-              1306-1307, Rio Empire, Near Pal-RTO,<br/>
-              Pal-Hazira Road, Opp. Umra Bridge,<br/>
-              Pal-Adajan, Surat - 394510
+              1306-1307, Rio Empire,<br/>
+              Near Pal-RTO,<br/>
+              Opp. Umra Bridge,<br/>
+              Pal-Hazira Road,<br/>
+              Surat - 394510
             </p>
           </div>
         </div>
