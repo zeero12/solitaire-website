@@ -21,17 +21,43 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-const parser = new Parser();
+
+// ── Parser with timeout ────────────────────────────────────────
+const parser = new Parser({
+  timeout: 8000, // 8 seconds max per source — then move on
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (compatible; SolitaireBot/1.0)'
+  }
+});
 
 // ── Constants ──────────────────────────────────────────────────
 const POOL_MAX = 25;
 const FETCH_MAX = 20;
+const SOURCE_TIMEOUT_MS = 10000; // hard 10s cutoff per source
 
-// ── Write to Firestore ─────────────────────────────────────────
+// ── Fetch with hard timeout wrapper ───────────────────────────
+async function fetchWithTimeout(url, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Source timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    parser.parseURL(url)
+      .then(result => {
+        clearTimeout(timer);
+        resolve(result);
+      })
+      .catch(err => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
+// ── Pool Update ────────────────────────────────────────────────
 async function updateFirestorePool(newItems) {
   const heroNewsRef = db.collection('heroNews');
 
-  // Fetch existing pool
   const existingSnapshot = await heroNewsRef.get();
   const existingItems = existingSnapshot.docs.map(doc => ({
     docId: doc.id,
@@ -40,14 +66,13 @@ async function updateFirestorePool(newItems) {
 
   console.log(`Current Firestore pool size: ${existingItems.length}`);
 
-  // Find items not already in pool by id
   const existingIds = new Set(existingItems.map(item => item.id));
   const brandNewItems = newItems.filter(item => !existingIds.has(item.id));
 
   console.log(`Brand new items to add: ${brandNewItems.length}`);
 
   if (brandNewItems.length === 0) {
-    console.log('No new items found in this sync run — pool unchanged.');
+    console.log('No new items — pool unchanged.');
     await db.collection('systemMeta').doc('heroNews').set({
       lastSync: new Date().toISOString(),
       itemCount: existingItems.length,
@@ -58,7 +83,6 @@ async function updateFirestorePool(newItems) {
     return;
   }
 
-  // Remove oldest items if pool would exceed POOL_MAX
   const projectedSize = existingItems.length + brandNewItems.length;
   const removeCount = Math.max(0, projectedSize - POOL_MAX);
 
@@ -66,7 +90,6 @@ async function updateFirestorePool(newItems) {
     .sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt))
     .slice(0, removeCount);
 
-  // Commit batch
   const batch = db.batch();
 
   docsToRemove.forEach(item => {
@@ -102,8 +125,11 @@ async function syncNews() {
   for (const source of sources) {
     if (!source.enabled) continue;
 
+    console.log(`Fetching: ${source.name}...`);
+
     try {
-      const feed = await parser.parseURL(source.url);
+      // Use hard timeout wrapper instead of direct parseURL
+      const feed = await fetchWithTimeout(source.url, SOURCE_TIMEOUT_MS);
       let count = 0;
 
       for (const item of feed.items) {
@@ -115,15 +141,17 @@ async function syncNews() {
           count++;
         }
       }
-      console.log(`Successfully processed ${count} items from ${source.name}`);
+      console.log(`✓ ${source.name}: ${count} items`);
     } catch (error) {
-      console.error(`Error processing source ${source.name}:`, error.message);
+      // Log just the message — not the full stack
+      console.log(`✗ ${source.name}: ${error.message}`);
+      // Never hang — always continue to next source
     }
   }
 
-  console.log(`Total items after filter: ${allItems.length}`);
+  console.log(`Total after filter: ${allItems.length}`);
 
-  // Deduplicate by title (first 60 chars)
+  // Deduplicate by title
   const uniqueItemsMap = new Map();
   for (const item of allItems) {
     const key = item.title.substring(0, 60).toLowerCase();
@@ -144,24 +172,23 @@ async function syncNews() {
   const uniqueItems = Array.from(uniqueItemsMap.values());
   console.log(`Total after deduplication: ${uniqueItems.length}`);
 
-  // Sort and take top items
   uniqueItems.sort((a, b) => {
     if (b.priority !== a.priority) return b.priority - a.priority;
     return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
   });
 
   const topItems = uniqueItems.slice(0, FETCH_MAX);
-  console.log(`Items being passed to pool update: ${topItems.length}`);
+  console.log(`Sending to pool: ${topItems.length} items`);
 
   if (topItems.length === 0) {
-    console.log('No relevant items found — pool unchanged.');
+    console.log('No relevant items — pool unchanged.');
     return;
   }
 
   try {
     await updateFirestorePool(topItems);
   } catch (error) {
-    console.error('Error updating Firestore pool:', error);
+    console.error('Firestore update failed:', error);
     process.exit(1);
   }
 }

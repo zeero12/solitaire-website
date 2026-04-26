@@ -8,6 +8,7 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 3        # ← add this line — kills job after 3 minutes no matter what
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
