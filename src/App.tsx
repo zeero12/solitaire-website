@@ -320,7 +320,7 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
 const WhoWeAre = () => (
   <div className="space-y-8">
     <div className="text-center">
-      <h2 className="text-3xl font-serif text-gray-900 mb-2">Who We Are</h2>
+      <h2 className="text-3xl font-serif text-gray-900 mb-2">Our Philosophy</h2>
       <h3 className="text-xl text-brand-gold font-serif italic">25+ Years of Excellence</h3>
     </div>
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -330,7 +330,7 @@ const WhoWeAre = () => (
           <Target className="w-8 h-8 text-brand-gold group-hover:text-white transition-colors duration-300" />
         </div>
         <h4 className="font-bold text-gray-900 mb-3 group-hover:text-white transition-colors duration-300 uppercase tracking-wide text-sm">Our Philosophy</h4>
-        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-300">Structured & disciplined advisory approach.</p>
+        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-300">Structured & disciplined investment approach.</p>
       </div>
       
       {/* Tile 2 */}
@@ -360,7 +360,7 @@ const Services = () => {
     { title: "PMS / AIF / SIF", desc: "Sophisticated investment vehicles managed by experienced portfolio managers.", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=400&auto=format&fit=crop", link: "/services/pms-aif-sif" },
     { title: "Financial Planning", desc: "A roadmap to achieve your life goals through disciplined financial management.", img: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=400&auto=format&fit=crop", link: "/services/financial-planning" },
     { title: "Mutual Funds", desc: "Curated fund portfolios across equity, debt, and hybrid categories to suit your goals.", img: "https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?q=80&w=400&auto=format&fit=crop", link: "/services/mutual-funds" },
-    { title: "Equity / Derivatives / SLBM", desc: "Active market participation with strategy, discipline, and expert guidance.", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=400&auto=format&fit=crop", link: "/services/equity-derivatives-slbm" },
+    { title: "Equity / Derivatives / SLBM", desc: "Active market participation with access to equity, derivatives, and SLBM through a systematic approach", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=400&auto=format&fit=crop", link: "/services/equity-derivatives-slbm" },
     { title: "Tax Saving Bonds (54EC)", desc: "Save capital gains tax on property sale by investing in government backed 54EC bonds.", img: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?q=80&w=400&auto=format&fit=crop", link: "/services/tax-saving-bonds" },
   ];
 
@@ -438,14 +438,14 @@ const Testimonials = () => (
     <h2 className="text-3xl font-serif text-gray-900">What Our Customers Say</h2>
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div className="bg-white border border-gray-100 p-5 rounded shadow-sm hover:shadow-md transition-shadow flex flex-col">
-        <p className="text-sm text-gray-600 mb-4 italic flex-grow">"Solitaire Financial Solutions has always provided me high quality service and brokerage relatively low cost. I would like to thank to all the SFS team, well done and keep up the good work."</p>
+        <p className="text-sm text-gray-600 mb-4 italic flex-grow">"Solitaire Financial Solutions has always provided me high quality service and brokerage relatively low cost. I would like to thank Vishal and the Solitaire team for consistently high-quality service and support."</p>
         <div>
           <div className="font-semibold text-gray-900 text-sm">Mr. Dipesh</div>
           <div className="text-xs text-gray-500">CEO</div>
         </div>
       </div>
       <div className="bg-white border border-gray-100 p-5 rounded shadow-sm hover:shadow-md transition-shadow flex flex-col">
-        <p className="text-sm text-gray-600 mb-4 italic flex-grow">"Their structured and disciplined advisory approach has helped me achieve my financial goals much faster than I anticipated. Highly recommended for wealth management."</p>
+        <p className="text-sm text-gray-600 mb-4 italic flex-grow">"Their structured and disciplined approach has helped me achieve my financial goals much faster than I expected. Highly recommended."</p>
         <div>
           <div className="font-semibold text-gray-900 text-sm">Priya Sharma</div>
           <div className="text-xs text-gray-500">Entrepreneur</div>
@@ -467,7 +467,7 @@ const CallToAction = ({ openModal }: { openModal: () => void }) => (
     <div className="p-8 sm:w-1/2">
       <h2 className="text-3xl font-serif text-gray-900 mb-4">Not Sure Where to Start?</h2>
       <p className="text-sm text-gray-600 mb-6">
-        Not sure where your financial journey should begin? Our advisors will understand your goals, assess your current situation and map out the right path — no obligation, no sales pitch.
+        Not sure where your financial journey should begin? Our team will understand your goals, assess your current situation and map out the right path — no obligation, no sales pitch.
       </p>
       <button onClick={openModal} className="bg-brand-blue hover:bg-[#152a45] text-white px-6 py-2.5 rounded font-medium transition-colors">
         Book a Free Call
@@ -546,13 +546,20 @@ const Footer = () => (
         </div>
       </div>
       
-      <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
-        <div className="flex gap-4">
-          <Link to="/admin" className="hover:text-white transition-colors flex items-center gap-1.5 font-medium">
-            <Shield className="w-3.5 h-3.5" /> ADMIN DASHBOARD
-          </Link>
+      <div className="border-t border-white/10 pt-8 flex flex-col items-center gap-6 text-center">
+        <div className="max-w-4xl">
+          <p className="text-[10px] md:text-xs text-gray-400 leading-relaxed uppercase tracking-wider">
+            Solitaire Financial Solutions — AMFI Registered Mutual Fund Distributor | ARN:[XXXXXX] | Registered with SEBI as Authorised Person of [Phillip Capital India Pvt. Ltd.] | Mutual fund investments are subject to market risks. Please read all scheme-related documents carefully before investing.
+          </p>
         </div>
-        <p>Copyright 2026 Solitaire Financial Solutions. All Rights Reserved.</p>
+        <div className="flex flex-col md:flex-row justify-between items-center w-full gap-4 text-xs text-gray-400">
+          <div className="flex gap-4">
+            <Link to="/admin" className="hover:text-white transition-colors flex items-center gap-1.5 font-medium">
+              <Shield className="w-3.5 h-3.5" /> ADMIN DASHBOARD
+            </Link>
+          </div>
+          <p>Copyright 2026 Solitaire Financial Solutions. All Rights Reserved.</p>
+        </div>
       </div>
     </div>
   </footer>
