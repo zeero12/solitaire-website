@@ -9,6 +9,15 @@
   --color-brand-light: #f4f7f6;
 }
 
+@keyframes progress-timer {
+  from { width: 0% }
+  to { width: 100% }
+}
+
+.animate-progress-timer {
+  animation: progress-timer 5s linear forwards;
+}
+
 html {
   scroll-behavior: smooth;
 }

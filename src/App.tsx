@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Menu, Phone, Mail, Instagram, Linkedin, Shield, MapPin, Target, ShieldCheck, TrendingUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import BookingModal from './components/BookingModal';
 import ScrollToTop from './components/ScrollToTop';
 import WealthManagement from './pages/WealthManagement';
@@ -78,6 +79,23 @@ const Navbar = ({ openModal }: { openModal: () => void }) => (
 
 const Hero = ({ openModal }: { openModal: () => void }) => {
   const [news, setNews] = useState<any[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [direction, setDirection] = useState<'next' | 'prev'>('next');
+  const [cardsToShow, setCardsToShow] = useState(3);
+  const touchStartX = useRef<number | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const updateCardsToShow = () => {
+      if (window.innerWidth < 768) setCardsToShow(1);
+      else if (window.innerWidth < 1024) setCardsToShow(2);
+      else setCardsToShow(3);
+    };
+    updateCardsToShow();
+    window.addEventListener('resize', updateCardsToShow);
+    return () => window.removeEventListener('resize', updateCardsToShow);
+  }, []);
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -110,6 +128,48 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
 
   const displayNews = news.length > 0 ? news : staticNews;
 
+  const goToNext = useCallback(() => {
+    if (displayNews.length <= cardsToShow) return;
+    setDirection('next');
+    setCurrentIndex((prev) => prev + 1);
+  }, [displayNews.length, cardsToShow]);
+
+  const goToPrev = useCallback(() => {
+    if (displayNews.length <= cardsToShow) return;
+    setDirection('prev');
+    setCurrentIndex((prev) => prev - 1);
+  }, [displayNews.length, cardsToShow]);
+
+  const goToIndex = (targetIdx: number) => {
+    const currentModuloIdx = ((currentIndex % displayNews.length) + displayNews.length) % displayNews.length;
+    if (targetIdx === currentModuloIdx || displayNews.length <= cardsToShow) return;
+    setDirection(targetIdx > currentModuloIdx ? 'next' : 'prev');
+    setCurrentIndex(prev => prev + (targetIdx - currentModuloIdx));
+  };
+
+  useEffect(() => {
+    if (isPaused || displayNews.length <= cardsToShow) return;
+    intervalRef.current = setInterval(goToNext, 5000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [currentIndex, isPaused, displayNews.length, cardsToShow, goToNext]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartX.current) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? goToNext() : goToPrev();
+    }
+    touchStartX.current = null;
+  };
+
+  const visibleSequence = Array.from({ length: cardsToShow }, (_, i) => currentIndex + i);
+
   return (
     <div className="relative h-[80vh] min-h-[600px] flex items-center justify-center">
       <div className="absolute inset-0 z-0">
@@ -138,39 +198,118 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 w-full translate-y-1/2 hidden lg:block z-20">
+      {/* News Carousel */}
+      <div 
+        className="absolute bottom-0 left-0 w-full translate-y-1/2 z-20"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
         <div className="max-w-5xl mx-auto px-4">
-          <div className="bg-brand-blue/90 backdrop-blur-sm p-4 rounded-sm flex items-center gap-4 border border-white/10 shadow-xl">
-            <button className="text-white/50 hover:text-white p-2"><ChevronLeft className="w-5 h-5"/></button>
-            <div className="grid grid-cols-3 gap-4 flex-1">
-              {displayNews.slice(0, 3).map((item, index) => (
-                <a 
-                  key={index}
-                  href={item.articleUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 bg-white/5 p-2 rounded cursor-pointer hover:bg-white/10 transition-colors"
-                >
-                  {item.imageUrl ? (
-                    <img src={item.imageUrl} className="w-12 h-12 object-cover rounded" alt=""/>
-                  ) : (
-                    <div className="w-12 h-12 bg-white/10 rounded flex items-center justify-center">
-                      <span className="text-white/50 text-xs">NEWS</span>
-                    </div>
-                  )}
-                  <div>
-                    {item.badge && (
-                      <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold border border-brand-gold/30 mb-1 inline-block">
-                        {item.badge}
-                      </span>
-                    )}
-                    <p className="text-white/60 text-xs uppercase">{item.source || item.category || 'NEWS'}</p>
-                    <p className="text-white text-sm font-medium line-clamp-2">{item.title}</p>
-                  </div>
-                </a>
-              ))}
+          <div className="relative group">
+            <div className="bg-brand-blue/90 backdrop-blur-sm p-4 rounded-sm border border-white/10 shadow-xl overflow-hidden relative min-h-[110px] flex items-center justify-center h-full">
+              {/* Progress Bar */}
+              {displayNews.length > cardsToShow && (
+                <div 
+                  key={currentIndex}
+                  className="absolute bottom-0 left-0 h-[2px] bg-brand-gold animate-progress-timer"
+                  style={{ animationPlayState: isPaused ? 'paused' : 'running' }}
+                />
+              )}
+
+              {/* Navigation Arrows - Desktop Only */}
+              <button 
+                onClick={goToPrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 z-30 p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all opacity-0 group-hover:opacity-100 hidden lg:flex items-center justify-center"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              <div 
+                className="w-full px-8 lg:px-12 h-full flex items-center justify-center touch-pan-y"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div className="flex w-full overflow-hidden flex-nowrap" style={{ gap: '16px' }}>
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    {displayNews.length > 0 && visibleSequence.map((seqIdx) => {
+                      const itemIndex = ((seqIdx % displayNews.length) + displayNews.length) % displayNews.length;
+                      const item = displayNews[itemIndex];
+                      
+                      return (
+                        <motion.a
+                          layout
+                          key={seqIdx}
+                          href={item.articleUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-4 bg-white/5 p-3 rounded cursor-pointer hover:bg-white/10 transition-colors w-full group/card flex-shrink-0"
+                          style={{
+                            width: `calc((100% - ${(cardsToShow - 1) * 16}px) / ${cardsToShow})`
+                          }}
+                          initial={{ opacity: 0, x: direction === 'next' ? 60 : -60 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: direction === 'next' ? -60 : 60 }}
+                          transition={{ 
+                            layout: { type: "tween", duration: 0.45, ease: [0.4, 0, 0.2, 1] },
+                            opacity: { duration: 0.45, ease: "linear" },
+                            x: { duration: 0.45, ease: [0.4, 0, 0.2, 1] }
+                          }}
+                        >
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} className="w-14 h-14 object-cover rounded shadow-lg flex-shrink-0" alt=""/>
+                          ) : (
+                            <div className="w-14 h-14 bg-white/10 rounded flex items-center justify-center flex-shrink-0">
+                              <span className="text-white/50 text-[10px] uppercase font-bold">NEWS</span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0 text-left">
+                            <div className="flex items-center gap-2 mb-1 overflow-hidden">
+                              {item.badge && (
+                                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold border border-brand-gold/30 whitespace-nowrap">
+                                  {item.badge}
+                                </span>
+                              )}
+                              <p className="text-white/60 text-[10px] uppercase tracking-wider truncate">{item.source || item.category || 'NEWS'}</p>
+                            </div>
+                            <p className="text-white text-sm font-medium line-clamp-2 leading-snug group-hover/card:text-brand-gold transition-colors">{item.title}</p>
+                          </div>
+                        </motion.a>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              <button 
+                onClick={goToNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 z-30 p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all opacity-0 group-hover:opacity-100 hidden lg:flex items-center justify-center"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
             </div>
-            <button className="text-white/50 hover:text-white p-2"><ChevronRight className="w-5 h-5"/></button>
+
+            {/* Pagination Dots */}
+            {displayNews.length > cardsToShow && (
+              <div className="flex justify-center gap-2.5 mt-5">
+                {displayNews.map((_, idx) => {
+                  const isActive = idx === ((currentIndex % displayNews.length) + displayNews.length) % displayNews.length;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => goToIndex(idx)}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        isActive 
+                          ? 'bg-brand-gold w-6' 
+                          : 'bg-white/20 w-1.5 hover:bg-white/40'
+                      }`}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
