@@ -4,7 +4,7 @@ import { sources } from './sources.js';
 import { isFinanceRelevant } from './filter.js';
 import { normalizeItem } from './normalize.js';
 
-// ── Environment Variable Check ─────────────────────────────────
+// ── Environment Check ──────────────────────────────────────────
 const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT;
 if (!serviceAccountRaw) {
   console.error('FIREBASE_SERVICE_ACCOUNT environment variable is missing.');
@@ -24,28 +24,43 @@ const db = admin.firestore();
 const parser = new Parser();
 
 // ── Constants ──────────────────────────────────────────────────
-const POOL_MAX = 30;      // maximum items kept in Firestore at any time
-const FETCH_MAX = 20;     // maximum new items fetched per sync run
+const POOL_MAX = 30;
+const FETCH_MAX = 20;
+const STALE_HOURS = 12; // items older than this are replaced even if id matches
 
-// ── Pool Update Function ───────────────────────────────────────
+// ── Pool Update ────────────────────────────────────────────────
 async function updateFirestorePool(newItems) {
   const heroNewsRef = db.collection('heroNews');
 
-  // Fetch existing pool from Firestore
   const existingSnapshot = await heroNewsRef.get();
   const existingItems = existingSnapshot.docs.map(doc => ({
     docId: doc.id,
     ...doc.data()
   }));
 
-  // Find genuinely new items not already in pool
+  console.log(`Current pool size in Firestore: ${existingItems.length}`);
+
+  // Mark items as stale if older than STALE_HOURS
+  const staleThreshold = new Date();
+  staleThreshold.setHours(staleThreshold.getHours() - STALE_HOURS);
+
+  const staleIds = new Set(
+    existingItems
+      .filter(item => new Date(item.createdAt) < staleThreshold)
+      .map(item => item.id)
+  );
+
+  // Treat new items as "new" if their id is not in pool OR if they replace a stale item
   const existingIds = new Set(existingItems.map(item => item.id));
-  const brandNewItems = newItems.filter(item => !existingIds.has(item.id));
+  const itemsToAdd = newItems.filter(
+    item => !existingIds.has(item.id) || staleIds.has(item.id)
+  );
 
-  if (brandNewItems.length === 0) {
-    console.log('No new items to add — pool unchanged.');
+  console.log(`New unique items to add: ${itemsToAdd.length}`);
+  console.log(`Stale items eligible for replacement: ${staleIds.size}`);
 
-    // Still update metadata timestamp
+  if (itemsToAdd.length === 0) {
+    console.log('No new or updated items — pool unchanged.');
     await db.collection('systemMeta').doc('heroNews').set({
       lastSync: new Date().toISOString(),
       itemCount: existingItems.length,
@@ -56,51 +71,62 @@ async function updateFirestorePool(newItems) {
     return;
   }
 
-  // Calculate how many old items to remove to stay within POOL_MAX
-  const totalAfterAdd = existingItems.length + brandNewItems.length;
-  const removeCount = Math.max(0, totalAfterAdd - POOL_MAX);
+  // Remove stale items that are being replaced
+  const staleDocIds = existingItems
+    .filter(item => staleIds.has(item.id))
+    .map(item => item.docId);
 
-  // Sort existing by createdAt ascending — oldest first for removal
-  const sortedExisting = [...existingItems].sort(
-    (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+  // Also remove oldest items if pool would exceed POOL_MAX
+  const nonStaleExisting = existingItems.filter(
+    item => !staleIds.has(item.id)
   );
-  const docsToRemove = sortedExisting.slice(0, removeCount);
+  const totalAfterAdd = nonStaleExisting.length + itemsToAdd.length;
+  const overflowCount = Math.max(0, totalAfterAdd - POOL_MAX);
 
-  // Build and commit batch
+  const oldestNonStale = [...nonStaleExisting]
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .slice(0, overflowCount)
+    .map(item => item.docId);
+
+  const allDocIdsToRemove = [...new Set([...staleDocIds, ...oldestNonStale])];
+
   const batch = db.batch();
 
-  // Delete only the oldest overflow items
-  docsToRemove.forEach(item => {
-    batch.delete(heroNewsRef.doc(item.docId));
+  allDocIdsToRemove.forEach(docId => {
+    batch.delete(heroNewsRef.doc(docId));
   });
 
-  // Add only genuinely new items
-  brandNewItems.forEach(item => {
-    batch.set(heroNewsRef.doc(item.id), item);
+  itemsToAdd.forEach(item => {
+    batch.set(heroNewsRef.doc(item.id), {
+      ...item,
+      createdAt: new Date().toISOString() // refresh createdAt on re-add
+    });
   });
 
-  // Update metadata
-  const finalPoolSize = Math.min(totalAfterAdd, POOL_MAX);
+  const finalSize = Math.min(
+    existingItems.length - allDocIdsToRemove.length + itemsToAdd.length,
+    POOL_MAX
+  );
+
   const metaRef = db.collection('systemMeta').doc('heroNews');
   batch.set(metaRef, {
     lastSync: new Date().toISOString(),
-    itemCount: finalPoolSize,
-    newItemsAdded: brandNewItems.length,
-    oldItemsRemoved: removeCount,
+    itemCount: finalSize,
+    newItemsAdded: itemsToAdd.length,
+    oldItemsRemoved: allDocIdsToRemove.length,
     status: 'success'
   });
 
   await batch.commit();
   console.log(
-    `Pool updated — added ${brandNewItems.length} new, removed ${removeCount} old, pool size: ${finalPoolSize}`
+    `Pool updated — added ${itemsToAdd.length}, removed ${allDocIdsToRemove.length}, final size: ${finalSize}`
   );
 }
 
-// ── Main Sync Function ─────────────────────────────────────────
+// ── Main Sync ──────────────────────────────────────────────────
 async function syncNews() {
   let allItems = [];
 
-  // Fetch and process all enabled sources
   for (const source of sources) {
     if (!source.enabled) continue;
 
@@ -120,18 +146,18 @@ async function syncNews() {
       console.log(`Successfully processed ${count} items from ${source.name}`);
     } catch (error) {
       console.error(`Error processing source ${source.name}:`, error.message);
-      // Do not exit — continue processing remaining sources
     }
   }
 
-  // Deduplicate by normalized title (first 60 chars, lowercased)
+  console.log(`Total items after filter: ${allItems.length}`);
+
+  // Deduplicate
   const uniqueItemsMap = new Map();
   for (const item of allItems) {
     const key = item.title.substring(0, 60).toLowerCase();
     if (!uniqueItemsMap.has(key)) {
       uniqueItemsMap.set(key, item);
     } else {
-      // Keep higher priority item, or newer if same priority
       const existing = uniqueItemsMap.get(key);
       const isHigherPriority = item.priority > existing.priority;
       const isSamePriorityNewer =
@@ -144,22 +170,21 @@ async function syncNews() {
   }
 
   const uniqueItems = Array.from(uniqueItemsMap.values());
+  console.log(`Total items after deduplication: ${uniqueItems.length}`);
 
-  // Sort by priority descending, then publishedAt descending
   uniqueItems.sort((a, b) => {
     if (b.priority !== a.priority) return b.priority - a.priority;
     return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
   });
 
-  // Take top items from this sync run
   const topItems = uniqueItems.slice(0, FETCH_MAX);
+  console.log(`Top items being sent to Firestore pool: ${topItems.length}`);
 
   if (topItems.length === 0) {
-    console.log('No relevant items found in this sync run — pool unchanged.');
+    console.log('No relevant items found — pool unchanged.');
     return;
   }
 
-  // Update the rolling pool in Firestore
   try {
     await updateFirestorePool(topItems);
   } catch (error) {
