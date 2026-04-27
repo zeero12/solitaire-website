@@ -24,8 +24,8 @@ export default function AboutUs({ openModal }: { openModal: () => void }) {
           
           <div className="lg:w-7/12 space-y-6 text-gray-700 text-lg leading-relaxed text-justify">
             <h2 className="text-3xl md:text-4xl font-serif text-brand-blue mb-8 text-left">Meet Vishal Dalal</h2>
-            <p>Vishal Dalal is the founder and principal advisor at Solitaire Financial Solutions, with years of hands-on experience guiding individuals, families, and businesses through the complexities of financial planning and wealth creation.</p>
-            <p>His work spans a broad spectrum of financial avenues — capital markets, mutual funds, insurance, fixed income instruments, and beyond — always calibrated to the specific objectives, risk appetite, and long-term vision of each client he serves.</p>
+            <p>Vishal Dalal is the founder of Solitaire Financial Solutions, with years of hands-on experience guiding individuals, families, and businesses through the complexities of financial planning and wealth creation.</p>
+            <p>His work spans mutual funds, capital markets, fixed income instruments, and insurance — always calibrated to each client's specific objectives, risk appetite, and long-term vision.</p>
             <p>What distinguishes Vishal's approach is not just technical expertise, but the quality of relationships he builds. He works closely with clients to understand their evolving financial priorities, provides clarity at every stage of the engagement, and ensures that every decision is well-informed and purposeful.</p>
             
             <blockquote className="mt-8 border-l-4 border-gray-900 pl-6 py-6 bg-gray-50 rounded-r-md">
@@ -44,7 +44,7 @@ export default function AboutUs({ openModal }: { openModal: () => void }) {
           <h2 className="text-3xl md:text-4xl font-serif text-brand-blue mb-8">What We Stand For</h2>
           
           <div className="text-lg text-gray-700 leading-relaxed space-y-6 max-w-4xl mx-auto mb-12">
-            <p>At Solitaire Financial Solutions, our objective is straightforward — to provide a dependable platform where clients can access meaningful financial opportunities with confidence and clarity.</p>
+            <p>At Solitaire Financial Solutions, our objective is straightforward — to provide a dependable, transparent platform where clients can access the right financial products and make informed decisions with confidence.</p>
             <p>We are not driven by product-pushing or short-term metrics. We are driven by the financial stability and long-term prosperity of the individuals and families we serve.</p>
           </div>
           

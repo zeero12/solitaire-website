@@ -6,7 +6,7 @@ export default function WealthManagement({ openModal }: { openModal: () => void 
   return (
     <ServicePageLayout
       heroTitle="Wealth Management"
-      heroSubtitle="A complete financial partnership — built around your life, not just your portfolio."
+      heroSubtitle="A long-term, personal approach to your financial decisions — built around your life, not just a product."
       heroEyebrow="PERSONALIZED WEALTH MANAGEMENT"
       heroImage="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80"
       
@@ -34,11 +34,6 @@ export default function WealthManagement({ openModal }: { openModal: () => void 
           title: "Retirement Planning",
           description: "We calculate what you need, and build a systematic plan to get there.",
           icon: <Calendar className="w-5 h-5" />
-        },
-        {
-          title: "Estate & Succession Planning",
-          description: "Ensuring your wealth reaches the right people, in the right way, at the right time.",
-          icon: <Shield className="w-5 h-5" />
         },
         {
           title: "Insurance & Risk Coverage",

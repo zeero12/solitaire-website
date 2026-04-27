@@ -52,7 +52,7 @@ export default function MutualFunds({ openModal }: { openModal: () => void }) {
       promiseHighlight={{
         eyebrow: "OUR APPROACH",
         title: "Data-driven decisions. No emotional biases.",
-        description: "We build portfolios based on risk-adjusted returns and fund manager track records, not distributor incentives."
+        description: "We manage portfolios based on risk-adjusted returns and fund manager track records, not distributor incentives."
       }}
       promiseList={[
         {
