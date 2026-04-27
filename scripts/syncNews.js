@@ -124,26 +124,6 @@ async function syncNews() {
     try {
       const feed = await fetchWithTimeout(source.url, SOURCE_TIMEOUT_MS);
 
-      // ── MINT DEBUG — fires unconditionally ────────────────
-      if (source.name === 'Mint') {
-        console.log('=== MINT DEBUG START ===');
-        console.log(`Feed has ${feed.items.length} items`);
-
-        if (feed.items.length > 0) {
-          const s = feed.items[0];
-          console.log('ALL KEYS:', Object.keys(s).join(' | '));
-          console.log('enclosure:', JSON.stringify(s.enclosure));
-          console.log('media:content:', JSON.stringify(s['media:content']));
-          console.log('media:thumbnail:', JSON.stringify(s['media:thumbnail']));
-          console.log('content:encoded snippet:', (s['content:encoded'] || 'EMPTY').substring(0, 500));
-          console.log('content snippet:', (s.content || 'EMPTY').substring(0, 500));
-          console.log('image field:', JSON.stringify(s.image));
-          console.log('full item JSON:', JSON.stringify(s, null, 2).substring(0, 1000));
-        }
-        console.log('=== MINT DEBUG END ===');
-      }
-      // ── END DEBUG ─────────────────────────────────────────
-
       let count = 0;
       for (const item of feed.items) {
         const normalized = normalizeItem(item, source);
