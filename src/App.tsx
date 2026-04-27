@@ -257,10 +257,28 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
                           }}
                         >
                           {item.imageUrl ? (
-                            <img src={item.imageUrl} className="w-14 h-14 object-cover rounded shadow-lg flex-shrink-0" alt=""/>
+                            <>
+                              <img 
+                                src={item.imageUrl} 
+                                className="w-14 h-14 object-cover rounded shadow-lg flex-shrink-0" 
+                                alt={item.title}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  if (e.currentTarget.nextElementSibling) {
+                                      (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                                  }
+                                }}
+                              />
+                              <div 
+                                className="w-14 h-14 bg-white/10 rounded items-center justify-center flex-shrink-0" 
+                                style={{ display: 'none' }}
+                              >
+                                <span className="text-white/50 text-[10px] uppercase font-bold text-center leading-tight truncate px-1">{item.source || 'NEWS'}</span>
+                              </div>
+                            </>
                           ) : (
                             <div className="w-14 h-14 bg-white/10 rounded flex items-center justify-center flex-shrink-0">
-                              <span className="text-white/50 text-[10px] uppercase font-bold">NEWS</span>
+                              <span className="text-white/50 text-[10px] uppercase font-bold text-center leading-tight truncate px-1">{item.source || 'NEWS'}</span>
                             </div>
                           )}
                           <div className="flex-1 min-w-0 text-left">
