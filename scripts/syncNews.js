@@ -4,7 +4,6 @@ import { sources } from './sources.js';
 import { isFinanceRelevant } from './filter.js';
 import { normalizeItem } from './normalize.js';
 
-// ── Environment Check ──────────────────────────────────────────
 const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT;
 if (!serviceAccountRaw) {
   console.error('FIREBASE_SERVICE_ACCOUNT environment variable is missing.');
@@ -13,7 +12,6 @@ if (!serviceAccountRaw) {
 
 const serviceAccount = JSON.parse(serviceAccountRaw);
 
-// ── Firebase Init ──────────────────────────────────────────────
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -22,39 +20,36 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// ── Parser with timeout ────────────────────────────────────────
 const parser = new Parser({
-  timeout: 8000, // 8 seconds max per source — then move on
+  timeout: 8000,
   headers: {
     'User-Agent': 'Mozilla/5.0 (compatible; SolitaireBot/1.0)'
+  },
+  customFields: {
+    item: [
+      ['media:content', 'media:content'],
+      ['media:thumbnail', 'media:thumbnail'],
+      ['content:encoded', 'content:encoded'],
+      ['itunes:image', 'itunes:image']
+    ]
   }
 });
 
-// ── Constants ──────────────────────────────────────────────────
 const POOL_MAX = 25;
 const FETCH_MAX = 20;
-const SOURCE_TIMEOUT_MS = 10000; // hard 10s cutoff per source
+const SOURCE_TIMEOUT_MS = 10000;
 
-// ── Fetch with hard timeout wrapper ───────────────────────────
 async function fetchWithTimeout(url, timeoutMs) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(new Error(`Source timed out after ${timeoutMs}ms`));
     }, timeoutMs);
-
     parser.parseURL(url)
-      .then(result => {
-        clearTimeout(timer);
-        resolve(result);
-      })
-      .catch(err => {
-        clearTimeout(timer);
-        reject(err);
-      });
+      .then(result => { clearTimeout(timer); resolve(result); })
+      .catch(err => { clearTimeout(timer); reject(err); });
   });
 }
 
-// ── Pool Update ────────────────────────────────────────────────
 async function updateFirestorePool(newItems) {
   const heroNewsRef = db.collection('heroNews');
 
@@ -118,7 +113,6 @@ async function updateFirestorePool(newItems) {
   );
 }
 
-// ── Main Sync ──────────────────────────────────────────────────
 async function syncNews() {
   let allItems = [];
 
@@ -128,30 +122,46 @@ async function syncNews() {
     console.log(`Fetching: ${source.name}...`);
 
     try {
-      // Use hard timeout wrapper instead of direct parseURL
       const feed = await fetchWithTimeout(source.url, SOURCE_TIMEOUT_MS);
-      let count = 0;
 
+      // ── MINT DEBUG — fires unconditionally ────────────────
+      if (source.name === 'Mint') {
+        console.log('=== MINT DEBUG START ===');
+        console.log(`Feed has ${feed.items.length} items`);
+
+        if (feed.items.length > 0) {
+          const s = feed.items[0];
+          console.log('ALL KEYS:', Object.keys(s).join(' | '));
+          console.log('enclosure:', JSON.stringify(s.enclosure));
+          console.log('media:content:', JSON.stringify(s['media:content']));
+          console.log('media:thumbnail:', JSON.stringify(s['media:thumbnail']));
+          console.log('content:encoded snippet:', (s['content:encoded'] || 'EMPTY').substring(0, 500));
+          console.log('content snippet:', (s.content || 'EMPTY').substring(0, 500));
+          console.log('image field:', JSON.stringify(s.image));
+          console.log('full item JSON:', JSON.stringify(s, null, 2).substring(0, 1000));
+        }
+        console.log('=== MINT DEBUG END ===');
+      }
+      // ── END DEBUG ─────────────────────────────────────────
+
+      let count = 0;
       for (const item of feed.items) {
         const normalized = normalizeItem(item, source);
         if (!normalized) continue;
-
         if (isFinanceRelevant(normalized.title, normalized.summary)) {
           allItems.push(normalized);
           count++;
         }
       }
       console.log(`✓ ${source.name}: ${count} items`);
+
     } catch (error) {
-      // Log just the message — not the full stack
       console.log(`✗ ${source.name}: ${error.message}`);
-      // Never hang — always continue to next source
     }
   }
 
   console.log(`Total after filter: ${allItems.length}`);
 
-  // Deduplicate by title
   const uniqueItemsMap = new Map();
   for (const item of allItems) {
     const key = item.title.substring(0, 60).toLowerCase();
