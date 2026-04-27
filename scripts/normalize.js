@@ -4,13 +4,24 @@ function extractImageUrl(item) {
   // 1. Standard enclosure tag — used by Economic Times, Moneycontrol
   if (item.enclosure?.url) return item.enclosure.url;
 
-  // 2. media:content — used by Mint and many Indian news RSS feeds
-  if (item['media:content']?.$?.url) return item['media:content'].$.url;
-  if (item['media:content']?.url) return item['media:content'].url;
+  // 2. media:content — Mint uses this with $ attribute wrapper
+  // Handle all possible structures rss-parser may produce
+  const mediaContent = item['media:content'] || item['mediaContent'];
+  if (mediaContent) {
+    if (mediaContent.$?.url) return mediaContent.$.url;
+    if (mediaContent.url) return mediaContent.url;
+    if (Array.isArray(mediaContent) && mediaContent[0]?.$?.url)
+      return mediaContent[0].$.url;
+    if (Array.isArray(mediaContent) && mediaContent[0]?.url)
+      return mediaContent[0].url;
+  }
 
   // 3. media:thumbnail — alternative media tag
-  if (item['media:thumbnail']?.$?.url) return item['media:thumbnail'].$.url;
-  if (item['media:thumbnail']?.url) return item['media:thumbnail'].url;
+  const mediaThumbnail = item['media:thumbnail'] || item['mediaThumbnail'];
+  if (mediaThumbnail) {
+    if (mediaThumbnail.$?.url) return mediaThumbnail.$.url;
+    if (mediaThumbnail.url) return mediaThumbnail.url;
+  }
 
   // 4. itunes:image — used by some financial podcast/blog feeds
   if (item['itunes:image']?.href) return item['itunes:image'].href;
@@ -22,9 +33,9 @@ function extractImageUrl(item) {
     if (imgMatch?.[1]) return imgMatch[1];
   }
 
-  // 6. og:image or image field if feed includes it
+  // 6. Direct image field
   if (item.image?.url) return item.image.url;
-  if (item.image) return item.image;
+  if (typeof item.image === 'string') return item.image;
 
   return null;
 }
@@ -32,8 +43,6 @@ function extractImageUrl(item) {
 export function normalizeItem(item, source) {
   if (!item.title || !item.link) return null;
 
-  // Generate a proper unique id from the full URL
-  // MD5 hash of the full URL — short, unique, consistent
   const id = crypto
     .createHash('md5')
     .update(item.link.trim())
