@@ -79,19 +79,56 @@ export async function getHeroNews() {
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
 
-    console.log(`getHeroNews: returning ${Math.min(news.length, TARGET_DISPLAY_COUNT)} cards`);
+    // Group sorted items by source
+    const groupedBySource = {};
+    news.forEach(item => {
+      if (!groupedBySource[item.source]) {
+        groupedBySource[item.source] = [];
+      }
+      groupedBySource[item.source].push(item);
+    });
 
-    if (news.length < TARGET_DISPLAY_COUNT) {
-      const needed = TARGET_DISPLAY_COUNT - news.length;
-      const usedIds = new Set(news.map(i => i.id));
+    function interleaveBySource(grouped, targetCount) {
+      const sourceQueues = Object.values(grouped);
+      const result = [];
+      let queueIndex = 0;
+
+      while (result.length < targetCount) {
+        // Find next non-empty queue
+        let attempts = 0;
+        while (attempts < sourceQueues.length) {
+          const queue = sourceQueues[queueIndex % sourceQueues.length];
+          if (queue.length > 0) {
+            result.push(queue.shift());
+            queueIndex++;
+            break;
+          }
+          queueIndex++;
+          attempts++;
+        }
+
+        // All queues exhausted before reaching targetCount
+        if (attempts === sourceQueues.length) break;
+      }
+
+      return result;
+    }
+
+    const diverseNews = interleaveBySource(groupedBySource, TARGET_DISPLAY_COUNT);
+
+    console.log(`getHeroNews: returning ${Math.min(diverseNews.length, TARGET_DISPLAY_COUNT)} cards`);
+
+    if (diverseNews.length < TARGET_DISPLAY_COUNT) {
+      const needed = TARGET_DISPLAY_COUNT - diverseNews.length;
+      const usedIds = new Set(diverseNews.map(i => i.id));
       const padding = FALLBACK_CARDS
         .filter(c => !usedIds.has(c.id))
         .slice(0, needed);
       console.log(`getHeroNews: padding with ${padding.length} fallback cards`);
-      return [...news, ...padding];
+      return [...diverseNews, ...padding];
     }
 
-    return news.slice(0, TARGET_DISPLAY_COUNT);
+    return diverseNews.slice(0, TARGET_DISPLAY_COUNT);
 
   } catch (error) {
     console.error('getHeroNews: Firestore fetch failed — using fallback cards:', error);
