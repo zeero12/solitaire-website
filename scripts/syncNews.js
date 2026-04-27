@@ -111,6 +111,23 @@ async function updateFirestorePool(newItems) {
   console.log(
     `Pool updated — added ${brandNewItems.length}, removed ${docsToRemove.length}, final size: ${finalSize}`
   );
+
+// Auto-removes items older than 7 days regardless of pool size
+
+const sevenDaysAgo = new Date();
+sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+const staleItems = existingItems.filter(
+  item => new Date(item.publishedAt) < sevenDaysAgo
+);
+
+staleItems.forEach(item => {
+  batch.delete(heroNewsRef.doc(item.docId));
+});
+
+if (staleItems.length > 0) {
+  console.log(`Removed ${staleItems.length} items older than 7 days`);
+ }
 }
 
 async function syncNews() {
