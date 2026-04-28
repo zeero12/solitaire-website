@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "A client booking request.",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["new", "confirmed", "cancelled", "completed"],
+          "description": "The current status of the booking."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the booking was created."
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the booking was last updated."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the client."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email of the client."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Phone number of the client."
+        },
+        "service": {
+          "type": "string",
+          "description": "The service requested."
+        },
+        "date": {
+          "type": "string",
+          "description": "Requested date for the service."
+        },
+        "time": {
+          "type": "string",
+          "description": "Requested time for the service."
+        },
+        "message": {
+          "type": "string",
+          "description": "Additional message from the client."
+        }
+      },
+      "required": ["status", "created_at", "updated_at"]
+    },
+    "WhatsappLead": {
+      "title": "WhatsappLead",
+      "description": "A lead request via WhatsApp button.",
+      "type": "object",
+      "properties": {
+        "phone": {
+          "type": "string",
+          "description": "Phone number."
+        },
+        "optin": {
+          "type": "boolean",
+          "description": "Whether the user opted in."
+        },
+        "source_page": {
+          "type": "string",
+          "description": "Which page they clicked from."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp."
+        }
+      },
+      "required": ["phone", "optin", "created_at"]
+    },
+    "Blog": {
+      "title": "Blog",
+      "description": "Blog post content.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "author": { "type": "string" },
+        "date": { "type": "string" },
+        "image": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "created_at", "updated_at"]
+    }
+  },
+  "firestore": {
+    "bookings": {
+      "schema": "Booking",
+      "description": "Collection of business bookings."
+    },
+    "whatsapp_leads": {
+      "schema": "WhatsappLead",
+      "description": "Leads collected from WhatsApp buttons."
+    },
+    "blogs": {
+      "schema": "Blog",
+      "description": "Blog posts for the website."
+    }
+  }
+}

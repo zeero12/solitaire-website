@@ -19,6 +19,53 @@ import {
   onAuthStateChanged
 } from 'firebase/auth';
 
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
 // ─── App Initialization ───────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyB_jCps5CpO0t7yt6pYHrdgBmjcNXwDr_Q",
@@ -51,6 +98,9 @@ export const submitBooking = async (bookingData: any) => {
     });
     return { success: true, id: docRef.id };
   } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.CREATE, 'bookings');
+    }
     console.error("Firebase submitBooking error:", error);
     return { success: false, error: error.message };
   }
@@ -66,7 +116,10 @@ export const fetchBookings = async () => {
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.GET, 'bookings');
+    }
     console.error("Firebase fetchBookings error:", error);
     return [];
   }
@@ -89,7 +142,10 @@ export const subscribeToBookings = (callback: (bookings: any[]) => void) => {
       ...doc.data()
     }));
     callback(bookings);
-  }, (error) => {
+  }, (error: any) => {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.LIST, 'bookings');
+    }
     console.error("Firebase subscribeToBookings error:", error);
   });
 };
@@ -105,6 +161,9 @@ export const updateBookingStatus = async (bookingId: string, newStatus: string) 
     });
     return { success: true };
   } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.UPDATE, 'bookings');
+    }
     console.error("Firebase updateBookingStatus error:", error);
     return { success: false, error: error.message };
   }
@@ -124,6 +183,9 @@ export const submitWhatsappLead = async (phone: string, sourcePage: string) => {
     });
     return { success: true };
   } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.CREATE, 'whatsapp_leads');
+    }
     console.error("Firebase submitWhatsappLead error:", error);
     return { success: false, error: error.message };
   }
@@ -171,7 +233,10 @@ export const fetchBlogs = async () => {
     const q = query(collection(db, 'blogs'), orderBy('date', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.GET, 'blogs');
+    }
     console.error("Firebase fetchBlogs error:", error);
     return [];
   }
@@ -187,6 +252,9 @@ export const addBlog = async (blogData: any) => {
     });
     return { success: true, id: docRef.id };
   } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.CREATE, 'blogs');
+    }
     console.error("Firebase addBlog error:", error);
     return { success: false, error: error.message };
   }
@@ -201,6 +269,9 @@ export const updateBlog = async (blogId: string, blogData: any) => {
     });
     return { success: true };
   } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.UPDATE, 'blogs');
+    }
     console.error("Firebase updateBlog error:", error);
     return { success: false, error: error.message };
   }
@@ -212,6 +283,9 @@ export const deleteBlog = async (blogId: string) => {
     await deleteDoc(doc(db, 'blogs', blogId));
     return { success: true };
   } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.DELETE, 'blogs');
+    }
     console.error("Firebase deleteBlog error:", error);
     return { success: false, error: error.message };
   }
