@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── GLOBAL DENY ─────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ─── HELPERS ─────────────────────────────────────────────────
+
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string
+        && id.size() <= 128
+        && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // ─── VALIDATION HELPERS ──────────────────────────────────────
+
+    function isValidBooking(data) {
+      return data.keys().hasAny(['name', 'phone', 'email'])
+        && (!data.keys().hasAny(['name'])    || (data.name is string    && data.name.size() <= 100))
+        && (!data.keys().hasAny(['phone'])   || (data.phone is string   && data.phone.size() <= 30))
+        && (!data.keys().hasAny(['email'])   || (data.email is string   && data.email.size() <= 100))
+        && (!data.keys().hasAny(['service']) || (data['service'] is string && data['service'].size() <= 100))
+        && (!data.keys().hasAny(['message']) || (data.message is string && data.message.size() <= 1000));
+    }
+
+    function isValidWhatsappLead(data) {
+      return data.phone is string
+        && data.phone.size() <= 30
+        && data.optin is bool;
+    }
+
+    function isValidBlog(data) {
+      return data.title is string
+        && data.title.size() <= 200
+        && data.content is string
+        && data.content.size() <= 50000;
+    }
+
+    // ─── COLLECTIONS ─────────────────────────────────────────────
+
+    // 1. Bookings — public create, admin read/update/delete
+    match /bookings/{bookingId} {
+      allow create: if isValidBooking(incoming());
+      allow read, list, update, delete: if isAdmin();
+    }
+
+    // 2. WhatsApp Leads — public create, admin read/update/delete
+    match /whatsapp_leads/{leadId} {
+      allow create: if isValidWhatsappLead(incoming());
+      allow read, list, update, delete: if isAdmin();
+    }
+
+    // 3. Blogs — public read, admin write
+    match /blogs/{blogId} {
+      allow read, list: if true;
+      allow create: if isAdmin() && isValidBlog(incoming());
+      allow update: if isAdmin() && isValidBlog(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // 4. Hero News — public read, no client write
+    match /heroNews/{docId} {
+      allow read, list: if true;
+      allow write: if false;
+    }
+
+    // 5. System Meta — public read only
+    match /systemMeta/{docId} {
+      allow read, list: if true;
+      allow write: if false;
+    }
+
+    // Availability settings — public read, admin write only
+    match /availability/{document} {
+      allow read, list: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

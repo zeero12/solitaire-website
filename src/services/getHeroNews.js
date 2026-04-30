@@ -68,9 +68,25 @@ export async function getHeroNews() {
       return FALLBACK_CARDS.slice(0, TARGET_DISPLAY_COUNT);
     }
 
+    function decodeHtmlEntities(str) {
+      if (typeof str !== 'string') return str;
+      if (!str.includes('&')) return str;
+      const doc = new DOMParser().parseFromString(str, 'text/html');
+      return doc.documentElement.textContent || str;
+    }
+
     const news = [];
     snapshot.forEach(doc => {
-      news.push({ id: doc.id, ...doc.data() });
+      const data = doc.data();
+      
+      // Decode HTML entities for text fields
+      if (data.title) data.title = decodeHtmlEntities(data.title);
+      if (data.summary) data.summary = decodeHtmlEntities(data.summary);
+      if (data.source) data.source = decodeHtmlEntities(data.source);
+      if (data.category) data.category = decodeHtmlEntities(data.category);
+      if (data.badge) data.badge = decodeHtmlEntities(data.badge);
+
+      news.push({ id: doc.id, ...data });
     });
 
     news.sort((a, b) => {

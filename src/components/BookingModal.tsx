@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { submitBooking } from '../firebase';
+import { submitBooking, getAvailabilitySettings } from '../firebase';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -10,24 +10,87 @@ interface BookingModalProps {
 
 const getISTDate = () => new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
 
-const generateTimeSlots = () => {
-  const slots = [];
-  for (let h = 10; h <= 18; h++) {
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const hour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-    slots.push(`${hour}:00 ${ampm}`);
-    if (h < 18) slots.push(`${hour}:30 ${ampm}`);
-  }
-  return slots;
-};
-
-const timeSlots = generateTimeSlots();
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
+  const [availability, setAvailability] = useState<any>(null);
+
+  useEffect(() => {
+    getAvailabilitySettings()
+      .then(result => {
+        if (result.success) setAvailability(result.data);
+      })
+      .catch(error => {
+        console.warn("Failed to load availability, using defaults.", error);
+        // Fallback to defaults so the UI continues working even if rules aren't deployed
+        setAvailability({
+          blockedDates: [],
+          workingHours: { start: "10:00", end: "18:00" },
+          blockedWeekdays: [0]
+        });
+      });
+  }, []);
+
+  const generateTimeSlots = () => {
+    if (!availability) {
+      const slots = [];
+      for (let h = 10; h <= 18; h++) {
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const hour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+        slots.push(`${hour}:00 ${ampm}`);
+        if (h < 18) slots.push(`${hour}:30 ${ampm}`);
+      }
+      return slots;
+    }
+
+    const slots = [];
+    const [startHour, startMin] = availability.workingHours.start.split(':').map(Number);
+    const [endHour, endMin] = availability.workingHours.end.split(':').map(Number);
+
+    let current = startHour * 60 + startMin;
+    const end = endHour * 60 + endMin;
+
+    while (current < end) {
+      const hours = Math.floor(current / 60);
+      const mins = current % 60;
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHour = hours > 12 ? hours - 12 : (hours === 0 ? 12 : hours);
+      const displayMin = String(mins).padStart(2, '0');
+      slots.push(`${displayHour}:${displayMin} ${ampm}`);
+      current += 30;
+    }
+
+    return slots;
+  };
+
+  const timeSlots = generateTimeSlots();
+
+  const isDateBlocked = (dateString: string) => {
+    if (!availability) return false;
+
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const dayOfWeek = date.getDay();
+
+    if (availability.blockedWeekdays.includes(dayOfWeek)) return true;
+
+    const isSpecificallyBlocked = availability.blockedDates.some(
+      (d: any) => d.date === dateString
+    );
+    return isSpecificallyBlocked;
+  };
+
+  const getBlockedReason = (dateString: string) => {
+    if (!availability) return null;
+    const blocked = availability.blockedDates.find((d: any) => d.date === dateString);
+    return blocked?.reason || null;
+  };
+
   const [step, setStep] = useState<'form' | 'loading' | 'success' | 'error' | 'confirmClose'>('form');
+  const [errorMsg, setErrorMsg] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [dateError, setDateError] = useState('');
   
   const [form, setForm] = useState({
     name: '',
@@ -37,6 +100,10 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
     purpose: '',
     quickBook: false
   });
+
+  const istNow = getISTDate();
+  const todayString = new Date(istNow.getTime() - (istNow.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+  const isBefore5PM = istNow.getHours() < 17 && !isDateBlocked(todayString);
 
   const [errors, setErrors] = useState({
     name: '',
@@ -92,9 +159,6 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
     if (isOpen) window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, step, form]);
-
-  const istNow = getISTDate();
-  const isBefore5PM = istNow.getHours() < 17;
 
   const handleQuickBook = () => {
     const now = getISTDate();
@@ -155,7 +219,7 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
     const payload = {
       name: form.name,
       phone: `+91${form.phone}`,
-      preferred_date: form.date?.toISOString().split('T')[0],
+      preferred_date: form.date ? `${form.date.getFullYear()}-${String(form.date.getMonth() + 1).padStart(2, '0')}-${String(form.date.getDate()).padStart(2, '0')}` : undefined,
       preferred_time: form.time,
       purpose: form.purpose || null,
       quick_book_today: form.quickBook,
@@ -169,6 +233,11 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
       setStep('success');
     } else {
       console.error("Booking failed:", result.error);
+      if (result.error === 'duplicate') {
+        setErrorMsg(result.message);
+      } else {
+        setErrorMsg('Your details are saved — please try again or reach us directly on WhatsApp.');
+      }
       setStep('error');
     }
   };
@@ -185,10 +254,11 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
   
   const days = Array.from({ length: daysInMonth }, (_, i) => {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i + 1);
-    const isSunday = date.getDay() === 0;
+    const dateString = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
     const isPast = date < today;
     const isTooFar = date > maxDate;
-    const isDisabled = isSunday || isPast || isTooFar;
+    const blocked = isDateBlocked(dateString);
+    const isDisabled = isPast || isTooFar || blocked;
     const isSelected = form.date && date.toDateString() === form.date.toDateString();
     
     return (
@@ -200,11 +270,15 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
           setForm({ ...form, date, quickBook: false });
           setShowCalendar(false);
           setErrors(prev => ({ ...prev, date: '' }));
+          setDateError('');
         }}
-        className={`p-2 text-center rounded-full w-8 h-8 flex items-center justify-center text-sm mx-auto transition-colors
-          ${isDisabled ? 'text-gray-300 cursor-not-allowed' : 
+        className={`relative p-2 text-center rounded-full w-8 h-8 flex items-center justify-center text-sm mx-auto transition-colors
+          ${blocked ? 'bg-gray-50 text-gray-400 cursor-not-allowed line-through decoration-gray-300' :
+            isDisabled ? 'text-gray-300 cursor-not-allowed' : 
             isSelected ? 'bg-brand-blue text-white font-medium' : 
-            'hover:bg-brand-light text-gray-700'}`}
+            'hover:bg-brand-light text-gray-700'}
+        `}
+        title={blocked ? getBlockedReason(dateString) || 'Not Available' : ''}
       >
         {i + 1}
       </button>
@@ -214,6 +288,51 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
   const changeMonth = (offset: number) => {
     const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1);
     setCurrentMonth(newMonth);
+  };
+
+  const generateClientCalendarLink = () => {
+    let dateStr = '';
+    if (form.date) {
+      const year = form.date.getFullYear();
+      const month = String(form.date.getMonth() + 1).padStart(2, '0');
+      const day = String(form.date.getDate()).padStart(2, '0');
+      dateStr = `${year}-${month}-${day}`;
+    }
+    let timeStr = form.time;
+    if (!dateStr || !timeStr) return '#';
+
+    const [year, month, day] = dateStr.split('-');
+    
+    // Parse 12hr time format, e.g., "02:30 PM" or "10:00 AM"
+    const timeParts = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+    let hour = 10;
+    let min = 0;
+    if (timeParts) {
+      hour = parseInt(timeParts[1], 10);
+      min = parseInt(timeParts[2], 10);
+      const ampm = timeParts[3]?.toUpperCase();
+      if (ampm === 'PM' && hour < 12) hour += 12;
+      if (ampm === 'AM' && hour === 12) hour = 0;
+    }
+
+    const endHourNum = hour + 1;
+    
+    const formattedStartHour = String(hour).padStart(2, '0');
+    const formattedStartMin = String(min).padStart(2, '0');
+    const formattedEndHour = String(endHourNum).padStart(2, '0');
+
+    const start = `${year}${month}${day}T${formattedStartHour}${formattedStartMin}00`;
+    const end = `${year}${month}${day}T${formattedEndHour}${formattedStartMin}00`;
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `Consultation with Vishal (Solitaire Financial)`,
+      dates: `${start}/${end}`,
+      details: `Purpose: ${form.purpose || 'Not specified'}\nMy Phone: ${form.phone}`,
+      location: 'Phone / Video Call'
+    });
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
   };
 
   const waText = encodeURIComponent(`Hi Vishal, I just booked a consultation for ${form.date?.toLocaleDateString()} at ${form.time}. My name is ${form.name}.`);
@@ -303,7 +422,7 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
                         <button 
                           type="button"
                           onClick={() => { setShowCalendar(!showCalendar); setShowTimePicker(false); }}
-                          className={`w-full border rounded-md px-3 py-2.5 text-left flex items-center justify-between outline-none transition-shadow ${errors.date ? 'border-red-300 bg-red-50' : 'border-gray-300 focus:ring-2 focus:ring-brand-blue'} ${form.quickBook ? 'bg-brand-gold/5 border-brand-gold/30' : 'bg-white'}`}
+                          className={`w-full border rounded-md px-3 py-2.5 text-left flex items-center justify-between outline-none transition-shadow ${errors.date || dateError ? 'border-red-300 bg-red-50' : 'border-gray-300 focus:ring-2 focus:ring-brand-blue'} ${form.quickBook ? 'bg-brand-gold/5 border-brand-gold/30' : 'bg-white'}`}
                         >
                           <span className={form.date ? 'text-gray-900 font-medium' : 'text-gray-400'}>
                             {form.date ? form.date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Select Date'}
@@ -311,6 +430,7 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
                           <CalendarIcon className={`w-4 h-4 ${form.quickBook ? 'text-brand-gold' : 'text-gray-400'}`} />
                         </button>
                         {errors.date && <p className="text-xs text-red-500 mt-1.5">{errors.date}</p>}
+                        {dateError && !errors.date && <p className="text-xs text-red-500 mt-1.5">{dateError}</p>}
                         
                         {showCalendar && (
                           <div className="absolute top-full left-0 mt-1 w-full sm:w-[280px] p-4 border border-gray-200 rounded-lg bg-white shadow-xl z-20">
@@ -418,18 +538,18 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
                   </p>
                   <div className="w-full space-y-3 mt-auto">
                     <a 
-                      href={waLink} 
+                      href={generateClientCalendarLink()}
                       target="_blank" 
                       rel="noreferrer" 
-                      className="w-full bg-[#25D366] hover:bg-[#1ebd5a] text-white py-3.5 rounded-md font-medium transition-colors flex items-center justify-center gap-2 shadow-sm"
+                      className="w-full bg-brand-light hover:bg-[#e6f1f9] text-brand-blue py-3.5 rounded-md font-medium transition-colors flex items-center justify-center gap-2 shadow-sm border border-brand-blue/20"
                     >
-                      📲 Save to WhatsApp
+                      📅 Add to Google Calendar
                     </a>
                     <button 
                       onClick={onClose} 
-                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-3.5 rounded-md font-medium transition-colors"
+                      className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3.5 rounded-md font-medium transition-colors"
                     >
-                      ✕ Close
+                      ✓ Done
                     </button>
                   </div>
                 </div>
@@ -442,7 +562,7 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
                   </div>
                   <h3 className="text-3xl font-serif text-gray-900 mb-3">Something went wrong</h3>
                   <p className="text-gray-600 mb-10 leading-relaxed max-w-sm">
-                    Your details are saved — please try again or reach us directly on WhatsApp.
+                    {errorMsg}
                   </p>
                   <div className="w-full space-y-3 mt-auto">
                     <button 

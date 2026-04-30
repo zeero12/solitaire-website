@@ -1,14 +1,18 @@
 import { initializeApp } from 'firebase/app';
 import {
   getFirestore,
+  initializeFirestore,
   collection,
   addDoc,
   getDocs,
   onSnapshot,
   query,
+  where,
   orderBy,
   serverTimestamp,
   doc,
+  getDoc,
+  setDoc,
   updateDoc,
   deleteDoc
 } from 'firebase/firestore';
@@ -78,10 +82,24 @@ const firebaseConfig = {
 
 // Initialize Firebase with provided config or fallbacks
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, { experimentalForceLongPolling: true });
 export const auth = getAuth(app);
 
 const isDemo = firebaseConfig.apiKey === "demo-api-key";
+
+import { getDocFromServer } from 'firebase/firestore';
+
+async function testConnection() {
+  if (isDemo || !db) return;
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if(error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Please check your Firebase configuration.");
+    }
+  }
+}
+testConnection();
 
 // ─── Booking Functions ────────────────────────────────────────
 
@@ -90,6 +108,27 @@ export const submitBooking = async (bookingData: any) => {
   if (isDemo) return { success: false, error: 'Firebase is not configured. Please add your API key to the environment variables.' };
   if (!db) return { success: false, error: 'Firebase not configured. Please check environment variables.' };
   try {
+    if (bookingData.phone && bookingData.date) {
+      const q = query(
+        collection(db, 'bookings'),
+        where('phone', '==', bookingData.phone),
+        where('date', '==', bookingData.date)
+      );
+      const snapshot = await getDocs(q);
+      const hasDuplicate = snapshot.docs.some(doc => {
+        const data = doc.data();
+        return data.status === 'new' || data.status === 'confirmed';
+      });
+
+      if (hasDuplicate) {
+        return {
+          success: false,
+          error: 'duplicate',
+          message: 'A booking already exists for this number on the selected date.'
+        };
+      }
+    }
+
     const docRef = await addDoc(collection(db, 'bookings'), {
       ...bookingData,
       status: 'new',
@@ -169,6 +208,130 @@ export const updateBookingStatus = async (bookingId: string, newStatus: string) 
   }
 };
 
+export const confirmBooking = async (bookingId: string) => updateBookingStatus(bookingId, 'confirmed');
+export const completeBooking = async (bookingId: string) => updateBookingStatus(bookingId, 'completed');
+export const markNoShow = async (bookingId: string) => updateBookingStatus(bookingId, 'no-show');
+export const cancelBooking = async (bookingId: string) => updateBookingStatus(bookingId, 'cancelled');
+
+export const rescheduleBooking = async (bookingId: string, newDate: string, newTime: string) => {
+  if (isDemo || !db) return { success: false };
+  try {
+    await updateDoc(doc(db, 'bookings', bookingId), {
+      status: 'rescheduled',
+      date: newDate,
+      time: newTime,
+      updated_at: serverTimestamp()
+    });
+    return { success: true };
+  } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.UPDATE, 'bookings');
+    }
+    console.error("Firebase rescheduleBooking error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const archiveBooking = async (bookingId: string) => {
+  if (isDemo || !db) return { success: false };
+  try {
+    const bookingRef = doc(db, 'bookings', bookingId);
+    const bookingSnap = await getDoc(bookingRef);
+    if (bookingSnap.exists()) {
+      const data = bookingSnap.data();
+      // add try/catch around adding to archive? Actually it throws on error
+      await setDoc(doc(db, 'bookings_archive', bookingId), data);
+      await deleteDoc(bookingRef);
+      return { success: true };
+    }
+    return { success: false, error: 'Not found' };
+  } catch (error: any) {
+    console.error("Firebase archiveBooking error:", error);
+    return { success: false, error: error.message };
+  }
+};
+
+// ─── Availability Functions ───────────────────────────────────
+
+// Read availability settings
+export const getAvailabilitySettings = async () => {
+  if (isDemo || !db) {
+    return {
+      success: true,
+      data: {
+        blockedDates: [],
+        workingHours: { start: "10:00", end: "18:00" },
+        blockedWeekdays: [0]
+      }
+    };
+  }
+  try {
+    const docRef = doc(db, 'availability', 'settings');
+    const snapshot = await getDoc(docRef);
+    if (snapshot.exists()) {
+      return { success: true, data: snapshot.data() };
+    }
+    return {
+      success: true,
+      data: {
+        blockedDates: [],
+        workingHours: { start: "10:00", end: "18:00" },
+        blockedWeekdays: [0]
+      }
+    };
+  } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.GET, 'availability/settings');
+    }
+    return { success: false, error: error.message };
+  }
+};
+
+// Save availability settings (admin only)
+export const saveAvailabilitySettings = async (settings: any) => {
+  if (isDemo || !db) return { success: false };
+  try {
+    const docRef = doc(db, 'availability', 'settings');
+    await setDoc(docRef, settings);
+    return { success: true };
+  } catch (error: any) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+        handleFirestoreError(error, OperationType.WRITE, 'availability/settings');
+    }
+    return { success: false, error: error.message };
+  }
+};
+
+// Add a single blocked date
+export const addBlockedDate = async (date: string, reason: string) => {
+  if (isDemo || !db) return { success: false };
+  try {
+    const result = await getAvailabilitySettings();
+    if (!result.success || !result.data) return { success: false, error: result.error };
+    const current = result.data as any;
+    const alreadyBlocked = current.blockedDates.some((d: any) => d.date === date);
+    if (alreadyBlocked) return { success: false, error: 'Date already blocked' };
+    current.blockedDates.push({ date, reason: reason || '' });
+    return await saveAvailabilitySettings(current);
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+};
+
+// Remove a single blocked date
+export const removeBlockedDate = async (date: string) => {
+  if (isDemo || !db) return { success: false };
+  try {
+    const result = await getAvailabilitySettings();
+    if (!result.success || !result.data) return { success: false, error: result.error };
+    const current = result.data as any;
+    current.blockedDates = current.blockedDates.filter((d: any) => d.date !== date);
+    return await saveAvailabilitySettings(current);
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+};
+
 // ─── Lead Capture Functions ───────────────────────────────────
 
 export const submitWhatsappLead = async (phone: string, sourcePage: string) => {
@@ -232,7 +395,21 @@ export const fetchBlogs = async () => {
   try {
     const q = query(collection(db, 'blogs'), orderBy('date', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    function decodeHtmlEntities(str: any) {
+      if (typeof str !== 'string') return str;
+      if (!str.includes('&')) return str;
+      const doc = new DOMParser().parseFromString(str, 'text/html');
+      return doc.documentElement.textContent || str;
+    }
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      if (data.title) data.title = decodeHtmlEntities(data.title);
+      if (data.excerpt) data.excerpt = decodeHtmlEntities(data.excerpt);
+      if (data.content) data.content = decodeHtmlEntities(data.content);
+      return { id: doc.id, ...data };
+    });
   } catch (error: any) {
     if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
         handleFirestoreError(error, OperationType.GET, 'blogs');

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Clock, Calendar, User, Phone, Info, Shield, Bell, FileText, Plus, Trash2, LogOut, Edit2 } from 'lucide-react';
+import { CheckCircle2, Clock, Calendar, CalendarDays, User, Phone, Info, Shield, Bell, FileText, Plus, Trash2, LogOut, Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { subscribeToBookings, updateBookingStatus, adminLogin, adminLogout, onAuthChange, fetchBlogs, addBlog, updateBlog, deleteBlog } from '../firebase';
+import { subscribeToBookings, confirmBooking, completeBooking, markNoShow, cancelBooking, rescheduleBooking, adminLogin, adminLogout, onAuthChange, fetchBlogs, addBlog, updateBlog, deleteBlog, getAvailabilitySettings, saveAvailabilitySettings, addBlockedDate, removeBlockedDate } from '../firebase';
+
+const DEFAULT_AVAILABILITY = {
+  blockedDates: [],
+  workingHours: { start: "10:00", end: "18:00" },
+  blockedWeekdays: [0]
+};
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -10,16 +16,173 @@ export default function AdminDashboard() {
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'bookings' | 'blogs'>('bookings');
+  const [activeTab, setActiveTab] = useState<'bookings' | 'blogs' | 'availability'>('bookings');
+  const [bookingTab, setBookingTab] = useState<'active' | 'history'>('active');
+  const [proposingFor, setProposingFor] = useState<string | null>(null);
+  const [newSlotDate, setNewSlotDate] = useState('');
+  const [newSlotTime, setNewSlotTime] = useState('');
   const [bookings, setBookings] = useState<any[]>([]);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [blogs, setBlogs] = useState<any[]>([]);
-  const [notification, setNotification] = useState<{ message: string, visible: boolean } | null>(null);
+  const [notification, setNotification] = useState<{ message: string, visible: boolean, type: 'success' | 'info' | 'warning' | 'error' | 'neutral', title: string } | null>(null);
   
   // Blog Form State
   const [showBlogForm, setShowBlogForm] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [newBlog, setNewBlog] = useState({ title: '', excerpt: '', content: '', imageUrl: '' });
+
+  // Availability State
+  const [availabilitySettings, setAvailabilitySettings] = useState(DEFAULT_AVAILABILITY);
+  const [availabilityLoading, setAvailabilityLoading] = useState(true);
+  const [newBlockDate, setNewBlockDate] = useState('');
+  const [newBlockReason, setNewBlockReason] = useState('');
+  const [workingHours, setWorkingHours] = useState({ start: '10:00', end: '18:00' });
+  const [blockedWeekdays, setBlockedWeekdays] = useState<number[]>([0]);
+
+  const handleAddBlockedDate = async () => {
+    if (!newBlockDate) {
+      showNotification('Please select a date to block.', 'warning', 'Missing Date');
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    if (newBlockDate < today) {
+      showNotification('Past dates cannot be blocked.', 'error', 'Invalid Date');
+      return;
+    }
+    
+    const result = await addBlockedDate(newBlockDate, newBlockReason);
+    if (result.success) {
+      showNotification('Date has been blocked successfully.', 'success', 'Date Blocked');
+      setNewBlockDate('');
+      setNewBlockReason('');
+      
+      const refresh = await getAvailabilitySettings();
+      if (refresh.success) {
+        setAvailabilitySettings(refresh.data);
+      }
+    } else {
+      showNotification(`Failed to block date: ${result.error}`, 'error', 'Action Failed');
+    }
+  };
+
+  const handleRemoveBlockedDate = async (date: string) => {
+    const result = await removeBlockedDate(date);
+    if (result.success) {
+      showNotification('Blocked date removed.', 'neutral', 'Date Unblocked');
+      const refresh = await getAvailabilitySettings();
+      if (refresh.success) setAvailabilitySettings(refresh.data);
+    } else {
+      showNotification(`Failed to remove date: ${result.error}`, 'error', 'Action Failed');
+    }
+  };
+
+  const handleSaveWorkingHours = async () => {
+    if (workingHours.start >= workingHours.end) {
+      showNotification('Start time must be before end time.', 'error', 'Invalid Time Window');
+      return;
+    }
+    const newSettings = { ...availabilitySettings, workingHours };
+    const result = await saveAvailabilitySettings(newSettings);
+    if (result.success) {
+      setAvailabilitySettings(newSettings);
+      showNotification('Working hours updated.', 'success', 'Settings Saved');
+    } else {
+      showNotification(`Failed to save working hours: ${result.error}`, 'error', 'Save Failed');
+    }
+  };
+
+  const handleToggleWeekday = (dayIdx: number) => {
+    setBlockedWeekdays(prev => {
+      let next;
+      if (prev.includes(dayIdx)) {
+        next = prev.filter(d => d !== dayIdx);
+      } else {
+        next = [...prev, dayIdx];
+      }
+      return next;
+    });
+  };
+
+  const handleSaveWeekdays = async () => {
+    // 0=Sun, 1=Mon, ..., 6=Sat. 7 days total.
+    if (blockedWeekdays.length === 7) {
+      showNotification('At least one working day must remain.', 'error', 'Cannot Block All Days');
+      return;
+    }
+    const newSettings = { ...availabilitySettings, blockedWeekdays };
+    const result = await saveAvailabilitySettings(newSettings);
+    if (result.success) {
+      setAvailabilitySettings(newSettings);
+      showNotification('Weekly off days updated.', 'success', 'Settings Saved');
+    } else {
+      showNotification(`Failed to save off days: ${result.error}`, 'error', 'Save Failed');
+    }
+  };
+
+  const generateCalendarLink = (booking: any) => {
+    const dateStr = booking.preferred_date || booking.date || '';
+    const timeStr = booking.preferred_time || booking.time || '10:00 AM';
+
+    // Build start datetime string in format: YYYYMMDDTHHmmss
+    const [year, month, day] = dateStr.split('-');
+    
+    // Parse 12hr time format, e.g., "02:30 PM" or "10:00 AM"
+    const timeParts = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+    let hour = 10;
+    let min = 0;
+    if (timeParts) {
+      hour = parseInt(timeParts[1], 10);
+      min = parseInt(timeParts[2], 10);
+      const ampm = timeParts[3]?.toUpperCase();
+      if (ampm === 'PM' && hour < 12) hour += 12;
+      if (ampm === 'AM' && hour === 12) hour = 0;
+    }
+
+    // End time = start + 1 hour
+    let endHour = hour + 1;
+    
+    const formattedStartHour = String(hour).padStart(2, '0');
+    const formattedStartMin = String(min).padStart(2, '0');
+    const formattedEndHour = String(endHour).padStart(2, '0');
+
+    const start = `${year}${month}${day}T${formattedStartHour}${formattedStartMin}00`;
+    const end = `${year}${month}${day}T${formattedEndHour}${formattedStartMin}00`;
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `Consultation — ${booking.name}`,
+      dates: `${start}/${end}`,
+      details: `Purpose: ${booking.purpose || 'Not specified'}\nPhone: ${booking.phone}`,
+      location: 'Phone / Video Call'
+    });
+
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  };
+
+  // Content Loaders
+  useEffect(() => {
+    if (user) {
+      getAvailabilitySettings()
+        .then(result => {
+          if (result.success) {
+            setAvailabilitySettings(result.data);
+            setWorkingHours(result.data.workingHours);
+            setBlockedWeekdays(result.data.blockedWeekdays);
+          }
+          setAvailabilityLoading(false);
+        })
+        .catch(err => {
+          console.warn('Failed to fetch availability. Using defaults.', err);
+          setAvailabilityLoading(false);
+        });
+      fetchBlogs().then(fetchedBlogs => {
+        setBlogs(fetchedBlogs);
+      });
+    } else {
+      setBlogs([]);
+      setAvailabilityLoading(true);
+    }
+  }, [user]);
 
   // Auth Listener
   useEffect(() => {
@@ -53,17 +216,6 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, [user]);
 
-  // Blogs logic
-  useEffect(() => {
-    if (user) {
-      fetchBlogs().then(fetchedBlogs => {
-        setBlogs(fetchedBlogs);
-      });
-    } else {
-      setBlogs([]);
-    }
-  }, [user]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
@@ -82,7 +234,7 @@ export default function AdminDashboard() {
   const handleSaveBlog = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBlog.title || !newBlog.content) {
-      showNotification('Title and Content are required.');
+      showNotification('Title and Content are required.', 'error', 'Validation Error');
       return;
     }
     
@@ -92,9 +244,9 @@ export default function AdminDashboard() {
         setBlogs(blogs.map(b => 
           b.id === editingBlogId ? { ...b, ...newBlog } : b
         ));
-        showNotification('Blog post updated successfully.');
+        showNotification('Your modifications have been saved.', 'success', 'Blog Updated');
       } else {
-        showNotification(`Error: ${result.error}`);
+        showNotification(`Error: ${result.error}`, 'error', 'Update Failed');
       }
     } else {
       const blogData = {
@@ -105,9 +257,9 @@ export default function AdminDashboard() {
       const result = await addBlog(blogData);
       if (result.success) {
         setBlogs([{ id: result.id, ...blogData }, ...blogs]);
-        showNotification('Blog post published successfully.');
+        showNotification('The blog post is now live.', 'success', 'Blog Published');
       } else {
-        showNotification(`Error: ${result.error}`);
+        showNotification(`Error: ${result.error}`, 'error', 'Publish Failed');
       }
     }
     
@@ -138,27 +290,105 @@ export default function AdminDashboard() {
       const result = await deleteBlog(id);
       if (result.success) {
         setBlogs(blogs.filter(b => b.id !== id));
-        showNotification('Blog post deleted.');
+        showNotification('The blog post was removed from the system.', 'neutral', 'Blog Deleted');
       } else {
-        showNotification(`Error: ${result.error}`);
+        showNotification(`Error: ${result.error}`, 'error', 'Delete Failed');
       }
     }
+  };
+
+  const normalizePhone = (phone: string) => {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.startsWith('91') && digits.length === 12) return digits;
+    if (digits.length === 10) return `91${digits}`;
+    return digits;
+  };
+
+  const openWhatsapp = (booking: any, messageType: string) => {
+    const phone = normalizePhone(booking.phone);
+    const dateStr = booking.preferred_date ? new Date(booking.preferred_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : (booking.date ? new Date(booking.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+    const timeStr = booking.preferred_time || booking.time;
+    const name = booking.name;
+    let message = '';
+
+    if (messageType === 'accept') {
+      message = `Hi ${name}, your consultation with Vishal Dalal at Solitaire Financial Solutions is confirmed for ${dateStr} at ${timeStr}. We look forward to speaking with you.`;
+    } else if (messageType === 'propose') {
+      const newDateStr = newSlotDate ? new Date(newSlotDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN');
+      message = `Hi ${name}, thank you for reaching out to Solitaire Financial Solutions. We'd like to suggest an alternate slot for your consultation: ${newDateStr} at ${newSlotTime}. Please confirm if this works for you, or call us to discuss a suitable time.`;
+    } else if (messageType === 'cancel') {
+      message = `Hi ${name}, we regret to inform you that your consultation scheduled for ${dateStr} at ${timeStr} has been cancelled. Please reach out to reschedule at your convenience.`;
+    } else {
+      message = `Hi ${name}, this is Vishal Dalal from Solitaire Financial Solutions. I'm reaching out regarding your consultation request. Please let me know a convenient time to connect.`;
+    }
+
+    // Need to do this properly
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const handleWhatsapp = (booking: any) => {
+    if (booking.status === 'confirmed') openWhatsapp(booking, 'accept');
+    else if (booking.status === 'rescheduled') openWhatsapp(booking, 'propose');
+    else openWhatsapp(booking, 'followup');
   };
 
   const handleAccept = async (bookingId: string) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
 
-    const result = await updateBookingStatus(bookingId, 'Accepted');
+    const result = await confirmBooking(bookingId);
     if (result.success) {
-      showNotification(`Automated confirmation sent to ${booking.name} (${booking.phone}) for ${booking.preferred_date} at ${booking.preferred_time}.`);
+      openWhatsapp(booking, 'accept');
+      showNotification(`Booking confirmed. WhatsApp message opened for ${booking.name}.`, 'success', 'Booking Confirmed');
     } else {
-      showNotification(`Failed to update status: ${result.error}`);
+      showNotification(`Failed to update status: ${result.error}`, 'error', 'Action Failed');
     }
   };
 
-  const showNotification = (message: string) => {
-    setNotification({ message, visible: true });
+  const handleMarkComplete = async (bookingId: string) => {
+    await completeBooking(bookingId);
+    showNotification('The consultation has been marked as complete.', 'neutral', 'Booking Completed');
+  };
+
+  const handleMarkNoShow = async (bookingId: string) => {
+    await markNoShow(bookingId);
+    showNotification('The client failed to attend the consultation.', 'warning', 'Booking No-Show');
+  };
+
+  const handleCancel = async (bookingId: string) => {
+    await cancelBooking(bookingId);
+    showNotification('The booking has been successfully cancelled.', 'warning', 'Booking Cancelled');
+  };
+
+  const handleSendProposal = async (bookingId: string) => {
+    if (!newSlotDate || !newSlotTime) {
+      showNotification('Please select a new date and time.', 'warning', 'Validation Error');
+      return;
+    }
+    const result = await rescheduleBooking(bookingId, newSlotDate, newSlotTime);
+    if (result.success) {
+      showNotification('New slot proposed successfully.', 'info', 'Booking Rescheduled');
+      setProposingFor(null);
+      setNewSlotDate('');
+      setNewSlotTime('');
+    } else {
+      showNotification(`Failed to propose slot: ${result.error}`, 'error', 'Action Failed');
+    }
+  };
+
+  const showNotification = (message: string, type: 'success' | 'info' | 'warning' | 'error' | 'neutral' = 'success', title?: string) => {
+    let defaultTitle = 'Notification';
+    if (!title) {
+        switch(type) {
+             case 'success': defaultTitle = 'Success'; break;
+             case 'info': defaultTitle = 'Information'; break;
+             case 'warning': defaultTitle = 'Warning'; break;
+             case 'error': defaultTitle = 'Error'; break;
+             case 'neutral': defaultTitle = 'Update'; break;
+        }
+    }
+
+    setNotification({ message, visible: true, type, title: title || defaultTitle });
     setTimeout(() => {
       setNotification(prev => prev ? { ...prev, visible: false } : null);
       setTimeout(() => setNotification(null), 300); // Wait for exit animation
@@ -218,6 +448,10 @@ export default function AdminDashboard() {
 
   const pendingCount = bookings.filter(b => b.status === 'new' || b.status === 'Pending').length;
   const acceptedCount = bookings.filter(b => b.status === 'Accepted' || b.status === 'confirmed').length;
+  
+  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const confirmedThisWeekCount = bookings.filter(b => (b.status === 'Accepted' || b.status === 'confirmed') && (b.updated_at?.toMillis ? b.updated_at.toMillis() > oneWeekAgo : true)).length;
+  const completedTotalCount = bookings.filter(b => b.status === 'completed').length;
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
@@ -234,7 +468,7 @@ export default function AdminDashboard() {
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="flex gap-4">
+            <div className="flex gap-4 overflow-x-auto pb-2">
               <div className="bg-white px-4 py-3 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center min-w-[120px]">
                 <span className="text-2xl font-bold text-brand-blue">{pendingCount}</span>
                 <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Pending</span>
@@ -242,6 +476,14 @@ export default function AdminDashboard() {
               <div className="bg-white px-4 py-3 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center min-w-[120px]">
                 <span className="text-2xl font-bold text-green-600">{acceptedCount}</span>
                 <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">Accepted</span>
+              </div>
+              <div className="bg-white px-4 py-3 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center min-w-[120px]">
+                <span className="text-2xl font-bold text-brand-gold">{confirmedThisWeekCount}</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider font-medium text-center">Confirmed<br/>This Week</span>
+              </div>
+              <div className="bg-white px-4 py-3 rounded-lg shadow-sm border border-gray-100 flex flex-col items-center min-w-[120px]">
+                <span className="text-2xl font-bold text-gray-800">{completedTotalCount}</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wider font-medium text-center">Completed<br/>Total</span>
               </div>
             </div>
             <button 
@@ -255,23 +497,43 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-8">
+        <div className="flex border-b border-gray-200 mb-8 overflow-x-auto hide-scrollbar">
           <button 
-            className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'bookings' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`whitespace-nowrap px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'bookings' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             onClick={() => setActiveTab('bookings')}
           >
             <Calendar className="w-4 h-4" /> Bookings
           </button>
           <button 
-            className={`px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'blogs' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            className={`whitespace-nowrap px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'blogs' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             onClick={() => setActiveTab('blogs')}
           >
             <FileText className="w-4 h-4" /> Blog Management
+          </button>
+          <button 
+            className={`whitespace-nowrap px-6 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'availability' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setActiveTab('availability')}
+          >
+            <CalendarDays className="w-4 h-4" /> Availability
           </button>
         </div>
 
         {activeTab === 'bookings' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="flex border-b border-gray-200">
+              <button 
+                className={`flex-1 py-3 font-medium text-sm text-center ${bookingTab === 'active' ? 'bg-gray-50 text-brand-blue border-b-2 border-brand-blue' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setBookingTab('active')}
+              >
+                Active
+              </button>
+              <button 
+                className={`flex-1 py-3 font-medium text-sm text-center ${bookingTab === 'history' ? 'bg-gray-50 text-brand-blue border-b-2 border-brand-blue' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setBookingTab('history')}
+              >
+                History
+              </button>
+            </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -284,7 +546,19 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {bookings.map((booking) => {
+                {bookings
+                  .filter(b => bookingTab === 'active' 
+                    ? ['new', 'Pending', 'confirmed', 'Accepted', 'rescheduled'].includes(b.status)
+                    : ['completed', 'no-show', 'cancelled'].includes(b.status)
+                  )
+                  .sort((a, b) => {
+                    if (bookingTab === 'active') {
+                      return new Date(a.date || a.preferred_date || 0).getTime() - new Date(b.date || b.preferred_date || 0).getTime();
+                    } else {
+                      return (b.updated_at?.toMillis ? b.updated_at.toMillis() : 0) - (a.updated_at?.toMillis ? a.updated_at.toMillis() : 0);
+                    }
+                  })
+                  .map((booking) => {
                   const isNew = newIds.has(booking.id);
                   return (
                   <tr 
@@ -325,25 +599,158 @@ export default function AdminDashboard() {
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
                           <Clock className="w-3.5 h-3.5" /> Pending
                         </span>
-                      ) : (
+                      ) : (booking.status === 'Accepted' || booking.status === 'confirmed') ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Accepted
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Confirmed
+                        </span>
+                      ) : booking.status === 'rescheduled' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                          <Calendar className="w-3.5 h-3.5" /> Rescheduled
+                        </span>
+                      ) : booking.status === 'completed' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                        </span>
+                      ) : booking.status === 'no-show' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                          <User className="w-3.5 h-3.5" /> No-Show
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                          Cancel
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {booking.status === 'new' || booking.status === 'Pending' ? (
-                        <button
-                          onClick={() => handleAccept(booking.id)}
-                          className="inline-flex items-center gap-2 bg-brand-blue hover:bg-[#152a45] text-white px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
-                        >
-                          <CheckCircle2 className="w-4 h-4" /> Accept
-                        </button>
-                      ) : (
-                        <span className="inline-flex items-center gap-2 text-gray-400 px-4 py-2 text-sm font-medium">
-                          Confirmed
-                        </span>
-                      )}
+                      <div className="flex flex-col items-end gap-2">
+
+                        {/* STATUS: new or Pending */}
+                        {(booking.status === 'new' || booking.status === 'Pending') && (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleAccept(booking.id)}
+                                className="inline-flex items-center gap-1.5 bg-brand-blue hover:bg-[#152a45] text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Accept
+                              </button>
+                              <button
+                                onClick={() => setProposingFor(proposingFor === booking.id ? null : booking.id)}
+                                className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                              >
+                                <Calendar className="w-3.5 h-3.5" /> Propose Slot
+                              </button>
+                              <button
+                                onClick={() => openWhatsapp(booking, 'followup')}
+                                className="inline-flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                                title="WhatsApp follow-up"
+                              >
+                                <Phone className="w-3.5 h-3.5" /> WhatsApp
+                              </button>
+                            </div>
+
+                            {/* Inline propose new slot form */}
+                            {proposingFor === booking.id && (
+                              <div className="flex items-center gap-2 mt-1 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <input
+                                  type="date"
+                                  value={newSlotDate}
+                                  onChange={e => setNewSlotDate(e.target.value)}
+                                  className="border border-gray-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-blue outline-none"
+                                />
+                                <input
+                                  type="time"
+                                  value={newSlotTime}
+                                  onChange={e => setNewSlotTime(e.target.value)}
+                                  className="border border-gray-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-blue outline-none"
+                                />
+                                <button
+                                  onClick={() => handleSendProposal(booking.id)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                                >
+                                  Send
+                                </button>
+                                <button
+                                  onClick={() => setProposingFor(null)}
+                                  className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded text-xs font-medium transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {/* STATUS: confirmed or Accepted */}
+                        {(booking.status === 'confirmed' || booking.status === 'Accepted') && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleMarkComplete(booking.id)}
+                              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Complete
+                            </button>
+                            <button
+                              onClick={() => handleMarkNoShow(booking.id)}
+                              className="inline-flex items-center gap-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                            >
+                              <User className="w-3.5 h-3.5" /> No-Show
+                            </button>
+                            <button
+                              onClick={() => handleCancel(booking.id)}
+                              className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => openWhatsapp(booking, 'accept')}
+                              className="inline-flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                              title="Send WhatsApp confirmation"
+                            >
+                              <Phone className="w-3.5 h-3.5" /> WhatsApp
+                            </button>
+                            <a
+                              href={generateCalendarLink(booking)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                              title="Add to Google Calendar"
+                            >
+                              <CalendarDays className="w-3.5 h-3.5" /> Calendar
+                            </a>
+                          </div>
+                        )}
+
+                        {/* STATUS: rescheduled */}
+                        {booking.status === 'rescheduled' && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleAccept(booking.id)}
+                              className="inline-flex items-center gap-1.5 bg-brand-blue hover:bg-[#152a45] text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Confirm
+                            </button>
+                            <button
+                              onClick={() => handleCancel(booking.id)}
+                              className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => openWhatsapp(booking, 'propose')}
+                              className="inline-flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                            >
+                              <Phone className="w-3.5 h-3.5" /> WhatsApp
+                            </button>
+                          </div>
+                        )}
+
+                        {/* STATUS: completed, no-show, cancelled — read only */}
+                        {['completed', 'no-show', 'cancelled'].includes(booking.status) && (
+                          <span className="text-xs text-gray-400 italic">No actions</span>
+                        )}
+
+                      </div>
                     </td>
                   </tr>
                 )})}
@@ -440,6 +847,156 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {activeTab === 'availability' && (
+          <div className="space-y-8">
+            {availabilityLoading ? (
+              <div className="text-center py-12 text-gray-500">Loading availability settings...</div>
+            ) : (
+              <>
+                {/* Section 1 - Blocked Dates */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="text-xl font-serif text-brand-blue mb-1">Blocked Dates</h3>
+                  <p className="text-sm text-gray-500 mb-6">Mark specific dates as unavailable — holidays, travel, or personal leave.</p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                    <input 
+                      type="date" 
+                      min={new Date().toISOString().split('T')[0]}
+                      value={newBlockDate}
+                      onChange={e => setNewBlockDate(e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue outline-none flex-1 max-w-[200px]"
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Diwali, Travelling"
+                      value={newBlockReason}
+                      onChange={e => setNewBlockReason(e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-brand-blue outline-none flex-1"
+                    />
+                    <button 
+                      onClick={handleAddBlockedDate}
+                      className="bg-brand-blue hover:bg-[#152a45] text-white px-6 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap"
+                    >
+                      Block Date
+                    </button>
+                  </div>
+
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                          <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Day</th>
+                          <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">Reason</th>
+                          <th className="px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {[...(availabilitySettings?.blockedDates || [])]
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                          .map((block) => {
+                            const dateObj = new Date(block.date);
+                            const isPast = dateObj < new Date(new Date().setHours(0,0,0,0));
+                            return (
+                              <tr key={block.date} className={isPast ? 'bg-gray-50/50 opacity-60' : ''}>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                  {dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-500">
+                                  {dateObj.toLocaleDateString('en-GB', { weekday: 'long' })}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">{block.reason || '-'}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <button 
+                                    onClick={() => handleRemoveBlockedDate(block.date)}
+                                    className="text-red-500 hover:text-red-700 text-sm font-medium"
+                                  >
+                                    Remove
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                        })}
+                        {(!availabilitySettings?.blockedDates || availabilitySettings.blockedDates.length === 0) && (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-8 text-center text-gray-500 text-sm">
+                              No dates blocked. Add dates above to mark them as unavailable.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Section 2 - Working Hours */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="text-xl font-serif text-brand-blue mb-1">Working Hours</h3>
+                  <p className="text-sm text-gray-500 mb-6">Set the daily time window during which consultations can be booked.</p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end">
+                    <div className="flex flex-col gap-1 w-full sm:w-auto">
+                      <label className="text-sm font-medium text-gray-700">From</label>
+                      <input 
+                        type="time" 
+                        step="1800"
+                        value={workingHours.start}
+                        onChange={e => setWorkingHours({ ...workingHours, start: e.target.value })}
+                        className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-brand-blue outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1 w-full sm:w-auto">
+                      <label className="text-sm font-medium text-gray-700">To</label>
+                      <input 
+                        type="time" 
+                        step="1800"
+                        value={workingHours.end}
+                        onChange={e => setWorkingHours({ ...workingHours, end: e.target.value })}
+                        className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-brand-blue outline-none"
+                      />
+                    </div>
+                    <button 
+                      onClick={handleSaveWorkingHours}
+                      className="bg-brand-gold hover:bg-[#b08d4f] text-white px-6 py-2 rounded-md font-medium transition-colors w-full sm:w-auto mt-2 sm:mt-0"
+                    >
+                      Save Working Hours
+                    </button>
+                  </div>
+                </div>
+
+                {/* Section 3 - Weekly Off Days */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="text-xl font-serif text-brand-blue mb-1">Weekly Off Days</h3>
+                  <p className="text-sm text-gray-500 mb-6">Select days of the week when no bookings should be accepted.</p>
+                  
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
+                      <button
+                        key={day}
+                        onClick={() => handleToggleWeekday(idx)}
+                        className={`px-4 py-2 rounded-md font-medium text-sm transition-colors ${
+                          blockedWeekdays.includes(idx)
+                            ? 'bg-brand-blue text-white shadow-sm'
+                            : 'bg-white border border-gray-300 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button 
+                    onClick={handleSaveWeekdays}
+                    className="bg-brand-gold hover:bg-[#b08d4f] text-white px-6 py-2 rounded-md font-medium transition-colors"
+                  >
+                    Save Off Days
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
       </div>
 
       {/* Notification Toast */}
@@ -451,11 +1008,20 @@ export default function AdminDashboard() {
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             className="fixed bottom-6 right-6 z-50 max-w-md bg-gray-900 text-white p-4 rounded-lg shadow-2xl flex items-start gap-3 border border-gray-800"
           >
-            <div className="bg-green-500/20 p-2 rounded-full text-green-400 flex-shrink-0">
-              <Bell className="w-5 h-5" />
+            <div className={`p-2 rounded-full flex-shrink-0 ${
+              notification.type === 'success' ? 'bg-green-500/20 text-green-400' :
+              notification.type === 'info' ? 'bg-blue-500/20 text-blue-400' :
+              notification.type === 'warning' ? 'bg-orange-500/20 text-orange-400' :
+              notification.type === 'error' ? 'bg-red-500/20 text-red-400' :
+              'bg-gray-500/20 text-gray-400'
+            }`}>
+              {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> :
+               notification.type === 'info' ? <Info className="w-5 h-5" /> :
+               notification.type === 'error' ? <Shield className="w-5 h-5" /> :
+               <Bell className="w-5 h-5" />}
             </div>
             <div>
-              <h4 className="font-medium text-sm mb-1">Notification Sent</h4>
+              <h4 className="font-medium text-sm mb-1">{notification.title}</h4>
               <p className="text-xs text-gray-300 leading-relaxed">{notification.message}</p>
             </div>
           </motion.div>
