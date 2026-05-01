@@ -192,9 +192,12 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
           <button onClick={openModal} className="bg-brand-gold hover:bg-[#b08d4f] text-white px-8 py-3 rounded-sm font-medium transition-colors w-full sm:w-auto">
             Book a Free Discovery Call
           </button>
-          <button className="text-white hover:text-brand-gold px-8 py-3 font-medium transition-colors flex items-center gap-2 w-full sm:w-auto justify-center">
-            See How We Work <ArrowRight className="w-4 h-4" />
-          </button>
+          <Link to="/about" className="relative px-8 py-3 group transition-all duration-300 ease-in-out rounded-md flex items-center justify-center gap-2 w-full sm:w-auto overflow-hidden">
+            <span className="absolute inset-0 bg-white rounded-md opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 ease-in-out shadow-sm"></span>
+            <span className="relative z-10 text-white group-hover:text-brand-gold transition-colors duration-300 ease-in-out font-medium flex items-center gap-2">
+              See How We Work <ArrowRight className="w-4 h-4" />
+            </span>
+          </Link>
         </div>
       </div>
 
@@ -591,7 +594,7 @@ const Home = ({ openModal }: { openModal: () => void }) => (
         <WhoWeAre />
         <Services />
         <CallToAction openModal={openModal} />
-        <CalculatorsSection />
+        <CalculatorsSection openModal={openModal} />
         <Testimonials />
       </div>
     </main>

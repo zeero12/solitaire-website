@@ -59,7 +59,7 @@ export const FormattedNumberInput = ({ value, onChange, min, max, className }: a
   );
 };
 
-const SIPCalculator = () => {
+const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
   const [type, setType] = useState<'sip' | 'lumpsum'>('sip');
   const [investment, setInvestment] = useState(10000);
   const [rate, setRate] = useState(12);
@@ -208,7 +208,10 @@ const SIPCalculator = () => {
             </div>
           </div>
 
-          <button className="w-48 bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors">
+          <button 
+            onClick={openModal}
+            className="w-48 bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+          >
             INVEST NOW
           </button>
         </div>
@@ -217,7 +220,7 @@ const SIPCalculator = () => {
   );
 };
 
-const RetirementCalculator = () => {
+const RetirementCalculator = ({ openModal }: { openModal: () => void }) => {
   const [currentAge, setCurrentAge] = useState(30);
   const [retirementAge, setRetirementAge] = useState(60);
   const [lifeExpectancy, setLifeExpectancy] = useState(85);
@@ -333,7 +336,10 @@ const RetirementCalculator = () => {
             <input type="range" className="w-full accent-brand-blue" value={existingFund} onChange={e => setExistingFund(Number(e.target.value))} min="0" max="200000000" step="10000" />
           </div>
 
-          <button className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors">
+          <button 
+            onClick={openModal}
+            className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+          >
             Want us to build a personalized plan around this?
           </button>
         </div>
@@ -385,7 +391,7 @@ const RetirementCalculator = () => {
   );
 };
 
-const InflationCalculator = () => {
+const InflationCalculator = ({ openModal }: { openModal: () => void }) => {
   const [currentExpenses, setCurrentExpenses] = useState(50000);
   const [inflationRate, setInflationRate] = useState(6);
   const [timePeriod, setTimePeriod] = useState(10);
@@ -432,10 +438,17 @@ const InflationCalculator = () => {
             <input type="range" className="w-full accent-brand-blue" value={timePeriod} onChange={e => setTimePeriod(Number(e.target.value))} min="1" max="40" step="1" />
           </div>
 
-          <div className="bg-brand-light rounded-lg p-4 flex justify-between items-center mt-4">
+          <div className="bg-brand-light rounded-lg p-4 flex justify-between items-center mt-4 mb-4">
             <span className="text-gray-700 font-medium">Future Cost</span>
             <span className="text-xl font-bold text-brand-blue">{formatCurrency(futureCost)}</span>
           </div>
+
+          <button 
+            onClick={openModal}
+            className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+          >
+            PLAN FOR THIS GOAL
+          </button>
         </div>
 
         <div className="flex flex-col items-center justify-center">
@@ -485,7 +498,7 @@ const InflationCalculator = () => {
   );
 };
 
-const SWPCalculator = () => {
+const SWPCalculator = ({ openModal }: { openModal: () => void }) => {
   const [swpType, setSwpType] = useState<'monthly' | 'yearly'>('monthly');
   const [investmentValue, setInvestmentValue] = useState(2500000);
   const [swpAmount, setSwpAmount] = useState(25000);
@@ -620,7 +633,7 @@ const SWPCalculator = () => {
             </ResponsiveContainer>
           </div>
           
-          <div className="w-full space-y-4">
+          <div className="w-full space-y-4 mb-6">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-brand-blue rounded-full"></div>
@@ -636,13 +649,20 @@ const SWPCalculator = () => {
               <span className="font-semibold text-gray-900">{formatCurrency(Math.max(0, totalInterest))}</span>
             </div>
           </div>
+
+          <button 
+            onClick={openModal}
+            className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+          >
+            PLAN YOUR WITHDRAWALS
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const FDCalculator = () => {
+const FDCalculator = ({ openModal }: { openModal: () => void }) => {
   const [investment, setInvestment] = useState(100000);
   const [rate, setRate] = useState(7);
   const [years, setYears] = useState(3);
@@ -704,7 +724,10 @@ const FDCalculator = () => {
             </div>
           </div>
 
-          <button className="w-40 bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors">
+          <button 
+            onClick={openModal}
+            className="w-40 bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+          >
             INVEST NOW
           </button>
         </div>
@@ -762,7 +785,7 @@ const FDCalculator = () => {
 
 import TaxSavingCalculator from './TaxSavingCalculator';
 
-export default function CalculatorsSection() {
+export default function CalculatorsSection({ openModal }: { openModal: () => void }) {
   const [activeTab, setActiveTab] = useState('SIP');
 
   const tabs = ['SIP', 'Retirement', 'Inflation', 'SWP', 'Tax Saving', 'FD'];
@@ -791,12 +814,12 @@ export default function CalculatorsSection() {
       </div>
 
       <div className="transition-all duration-500">
-        {activeTab === 'SIP' && <SIPCalculator />}
-        {activeTab === 'Retirement' && <RetirementCalculator />}
-        {activeTab === 'Inflation' && <InflationCalculator />}
-        {activeTab === 'SWP' && <SWPCalculator />}
-        {activeTab === 'Tax Saving' && <TaxSavingCalculator />}
-        {activeTab === 'FD' && <FDCalculator />}
+        {activeTab === 'SIP' && <SIPCalculator openModal={openModal} />}
+        {activeTab === 'Retirement' && <RetirementCalculator openModal={openModal} />}
+        {activeTab === 'Inflation' && <InflationCalculator openModal={openModal} />}
+        {activeTab === 'SWP' && <SWPCalculator openModal={openModal} />}
+        {activeTab === 'Tax Saving' && <TaxSavingCalculator openModal={openModal} />}
+        {activeTab === 'FD' && <FDCalculator openModal={openModal} />}
       </div>
     </div>
   );

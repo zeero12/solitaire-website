@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FormattedNumberInput, formatCurrency } from './CalculatorsSection';
 
-const TaxSavingCalculator = () => {
+const TaxSavingCalculator = ({ openModal }: { openModal: () => void }) => {
   const [step, setStep] = useState(1);
   
   // Step 1: Income
@@ -302,7 +302,10 @@ const TaxSavingCalculator = () => {
                 <button onClick={() => { setStep(1); setSalary(1200000); setOtherIncome(0); setSec80C(0); setSec80CCD(0); setSec80D(0); setHra(0); setHomeLoanInterest(0); setOtherDeductions(0); }} className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors">
                   Recalculate
                 </button>
-                <button className="bg-brand-gold hover:bg-[#b08d4a] text-white px-6 py-2.5 rounded-md font-medium transition-colors shadow-sm">
+                <button 
+                  onClick={openModal}
+                  className="bg-brand-gold hover:bg-[#b08d4a] text-white px-6 py-2.5 rounded-md font-medium transition-colors shadow-sm"
+                >
                   Book a Tax Planning Call
                 </button>
               </div>
