@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Loader2, Calendar as CalendarIcon, Clock, ChevronDown, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { submitBooking, getAvailabilitySettings } from '../firebase';
 
@@ -11,6 +11,201 @@ interface BookingModalProps {
 const getISTDate = () => new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
 
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+const countries = [
+  { code: '+93', name: 'Afghanistan', flag: '🇦🇫' },
+  { code: '+355', name: 'Albania', flag: '🇦🇱' },
+  { code: '+213', name: 'Algeria', flag: '🇩🇿' },
+  { code: '+376', name: 'Andorra', flag: '🇦🇩' },
+  { code: '+244', name: 'Angola', flag: '🇦🇴' },
+  { code: '+1-268', name: 'Antigua & Barbuda', flag: '🇦🇬' },
+  { code: '+54', name: 'Argentina', flag: '🇦🇷' },
+  { code: '+374', name: 'Armenia', flag: '🇦🇲' },
+  { code: '+61', name: 'Australia', flag: '🇦🇺' },
+  { code: '+43', name: 'Austria', flag: '🇦🇹' },
+  { code: '+994', name: 'Azerbaijan', flag: '🇦🇿' },
+  { code: '+1-242', name: 'Bahamas', flag: '🇧🇸' },
+  { code: '+973', name: 'Bahrain', flag: '🇧🇭' },
+  { code: '+880', name: 'Bangladesh', flag: '🇧🇩' },
+  { code: '+1-246', name: 'Barbados', flag: '🇧🇧' },
+  { code: '+375', name: 'Belarus', flag: '🇧🇾' },
+  { code: '+32', name: 'Belgium', flag: '🇧🇪' },
+  { code: '+501', name: 'Belize', flag: '🇧🇿' },
+  { code: '+229', name: 'Benin', flag: '🇧🇯' },
+  { code: '+975', name: 'Bhutan', flag: '🇧🇹' },
+  { code: '+591', name: 'Bolivia', flag: '🇧🇴' },
+  { code: '+387', name: 'Bosnia & Herzegovina', flag: '🇧🇦' },
+  { code: '+267', name: 'Botswana', flag: '🇧🇼' },
+  { code: '+55', name: 'Brazil', flag: '🇧🇷' },
+  { code: '+673', name: 'Brunei', flag: '🇧🇳' },
+  { code: '+359', name: 'Bulgaria', flag: '🇧🇬' },
+  { code: '+226', name: 'Burkina Faso', flag: '🇧🇫' },
+  { code: '+257', name: 'Burundi', flag: '🇧🇮' },
+  { code: '+855', name: 'Cambodia', flag: '🇰🇭' },
+  { code: '+237', name: 'Cameroon', flag: '🇨🇲' },
+  { code: '+1', name: 'Canada', flag: '🇨🇦' },
+  { code: '+238', name: 'Cape Verde', flag: '🇨🇻' },
+  { code: '+236', name: 'Central African Republic', flag: '🇨🇫' },
+  { code: '+235', name: 'Chad', flag: '🇹🇩' },
+  { code: '+56', name: 'Chile', flag: '🇨🇱' },
+  { code: '+86', name: 'China', flag: '🇨🇳' },
+  { code: '+57', name: 'Colombia', flag: '🇨🇴' },
+  { code: '+269', name: 'Comoros', flag: '🇰🇲' },
+  { code: '+242', name: 'Congo', flag: '🇨🇬' },
+  { code: '+506', name: 'Costa Rica', flag: '🇨🇷' },
+  { code: '+385', name: 'Croatia', flag: '🇭🇷' },
+  { code: '+53', name: 'Cuba', flag: '🇨🇺' },
+  { code: '+357', name: 'Cyprus', flag: '🇨🇾' },
+  { code: '+420', name: 'Czech Republic', flag: '🇨🇿' },
+  { code: '+45', name: 'Denmark', flag: '🇩🇰' },
+  { code: '+253', name: 'Djibouti', flag: '🇩🇯' },
+  { code: '+1-767', name: 'Dominica', flag: '🇩🇲' },
+  { code: '+1-809', name: 'Dominican Republic', flag: '🇩🇴' },
+  { code: '+593', name: 'Ecuador', flag: '🇪🇨' },
+  { code: '+20', name: 'Egypt', flag: '🇪🇬' },
+  { code: '+503', name: 'El Salvador', flag: '🇸🇻' },
+  { code: '+240', name: 'Equatorial Guinea', flag: '🇬🇶' },
+  { code: '+291', name: 'Eritrea', flag: '🇪🇷' },
+  { code: '+372', name: 'Estonia', flag: '🇪🇪' },
+  { code: '+268', name: 'Eswatini', flag: '🇸🇿' },
+  { code: '+251', name: 'Ethiopia', flag: '🇪🇹' },
+  { code: '+679', name: 'Fiji', flag: '🇫🇯' },
+  { code: '+358', name: 'Finland', flag: '🇫🇮' },
+  { code: '+33', name: 'France', flag: '🇫🇷' },
+  { code: '+241', name: 'Gabon', flag: '🇬🇦' },
+  { code: '+220', name: 'Gambia', flag: '🇬🇲' },
+  { code: '+995', name: 'Georgia', flag: '🇬🇪' },
+  { code: '+49', name: 'Germany', flag: '🇩🇪' },
+  { code: '+233', name: 'Ghana', flag: '🇬🇭' },
+  { code: '+30', name: 'Greece', flag: '🇬🇷' },
+  { code: '+1-473', name: 'Grenada', flag: '🇬🇩' },
+  { code: '+502', name: 'Guatemala', flag: '🇬🇹' },
+  { code: '+224', name: 'Guinea', flag: '🇬🇳' },
+  { code: '+245', name: 'Guinea-Bissau', flag: '🇬🇼' },
+  { code: '+592', name: 'Guyana', flag: '🇬🇾' },
+  { code: '+509', name: 'Haiti', flag: '🇭🇹' },
+  { code: '+504', name: 'Honduras', flag: '🇭🇳' },
+  { code: '+36', name: 'Hungary', flag: '🇭🇺' },
+  { code: '+354', name: 'Iceland', flag: '🇮🇸' },
+  { code: '+91', name: 'India', flag: '🇮🇳' },
+  { code: '+62', name: 'Indonesia', flag: '🇮🇩' },
+  { code: '+98', name: 'Iran', flag: '🇮🇷' },
+  { code: '+964', name: 'Iraq', flag: '🇮🇶' },
+  { code: '+353', name: 'Ireland', flag: '🇮🇪' },
+  { code: '+972', name: 'Israel', flag: '🇮🇱' },
+  { code: '+39', name: 'Italy', flag: '🇮🇹' },
+  { code: '+1-876', name: 'Jamaica', flag: '🇯🇲' },
+  { code: '+81', name: 'Japan', flag: '🇯🇵' },
+  { code: '+962', name: 'Jordan', flag: '🇯🇴' },
+  { code: '+7', name: 'Kazakhstan', flag: '🇰🇿' },
+  { code: '+254', name: 'Kenya', flag: '🇰🇪' },
+  { code: '+686', name: 'Kiribati', flag: '🇰🇮' },
+  { code: '+965', name: 'Kuwait', flag: '🇰🇼' },
+  { code: '+996', name: 'Kyrgyzstan', flag: '🇰🇬' },
+  { code: '+856', name: 'Laos', flag: '🇱🇦' },
+  { code: '+371', name: 'Latvia', flag: '🇱🇻' },
+  { code: '+961', name: 'Lebanon', flag: '🇱🇧' },
+  { code: '+266', name: 'Lesotho', flag: '🇱🇸' },
+  { code: '+231', name: 'Liberia', flag: '🇱🇷' },
+  { code: '+218', name: 'Libya', flag: '🇱🇾' },
+  { code: '+423', name: 'Liechtenstein', flag: '🇱🇮' },
+  { code: '+370', name: 'Lithuania', flag: '🇱🇹' },
+  { code: '+352', name: 'Luxembourg', flag: '🇱🇺' },
+  { code: '+261', name: 'Madagascar', flag: '🇲🇬' },
+  { code: '+265', name: 'Malawi', flag: '🇲🇼' },
+  { code: '+60', name: 'Malaysia', flag: '🇲🇾' },
+  { code: '+960', name: 'Maldives', flag: '🇲🇻' },
+  { code: '+223', name: 'Mali', flag: '🇲🇱' },
+  { code: '+356', name: 'Malta', flag: '🇲🇹' },
+  { code: '+692', name: 'Marshall Islands', flag: '🇲🇭' },
+  { code: '+222', name: 'Mauritania', flag: '🇲🇷' },
+  { code: '+230', name: 'Mauritius', flag: '🇲🇺' },
+  { code: '+52', name: 'Mexico', flag: '🇲🇽' },
+  { code: '+691', name: 'Micronesia', flag: '🇫🇲' },
+  { code: '+373', name: 'Moldova', flag: '🇲🇩' },
+  { code: '+377', name: 'Monaco', flag: '🇲🇨' },
+  { code: '+976', name: 'Mongolia', flag: '🇲🇳' },
+  { code: '+382', name: 'Montenegro', flag: '🇲🇪' },
+  { code: '+212', name: 'Morocco', flag: '🇲🇦' },
+  { code: '+258', name: 'Mozambique', flag: '🇲🇿' },
+  { code: '+95', name: 'Myanmar', flag: '🇲🇲' },
+  { code: '+264', name: 'Namibia', flag: '🇳🇦' },
+  { code: '+674', name: 'Nauru', flag: '🇳🇷' },
+  { code: '+977', name: 'Nepal', flag: '🇳🇵' },
+  { code: '+31', name: 'Netherlands', flag: '🇳🇱' },
+  { code: '+64', name: 'New Zealand', flag: '🇳🇿' },
+  { code: '+505', name: 'Nicaragua', flag: '🇳🇮' },
+  { code: '+227', name: 'Niger', flag: '🇳🇪' },
+  { code: '+234', name: 'Nigeria', flag: '🇳🇬' },
+  { code: '+850', name: 'North Korea', flag: '🇰🇵' },
+  { code: '+389', name: 'North Macedonia', flag: '🇲🇰' },
+  { code: '+47', name: 'Norway', flag: '🇳🇴' },
+  { code: '+968', name: 'Oman', flag: '🇴🇲' },
+  { code: '+92', name: 'Pakistan', flag: '🇵🇰' },
+  { code: '+680', name: 'Palau', flag: '🇵🇼' },
+  { code: '+507', name: 'Panama', flag: '🇵🇦' },
+  { code: '+675', name: 'Papua New Guinea', flag: '🇵🇬' },
+  { code: '+595', name: 'Paraguay', flag: '🇵🇾' },
+  { code: '+51', name: 'Peru', flag: '🇵🇪' },
+  { code: '+63', name: 'Philippines', flag: '🇵🇭' },
+  { code: '+48', name: 'Poland', flag: '🇵🇱' },
+  { code: '+351', name: 'Portugal', flag: '🇵🇹' },
+  { code: '+974', name: 'Qatar', flag: '🇶🇦' },
+  { code: '+40', name: 'Romania', flag: '🇷🇴' },
+  { code: '+7', name: 'Russia', flag: '🇷🇺' },
+  { code: '+250', name: 'Rwanda', flag: '🇷🇼' },
+  { code: '+1-869', name: 'Saint Kitts & Nevis', flag: '🇰🇳' },
+  { code: '+1-758', name: 'Saint Lucia', flag: '🇱🇨' },
+  { code: '+1-784', name: 'Saint Vincent', flag: '🇻🇨' },
+  { code: '+685', name: 'Samoa', flag: '🇼🇸' },
+  { code: '+378', name: 'San Marino', flag: '🇸🇲' },
+  { code: '+966', name: 'Saudi Arabia', flag: '🇸🇦' },
+  { code: '+221', name: 'Senegal', flag: '🇸🇳' },
+  { code: '+381', name: 'Serbia', flag: '🇷🇸' },
+  { code: '+248', name: 'Seychelles', flag: '🇸🇨' },
+  { code: '+232', name: 'Sierra Leone', flag: '🇸🇱' },
+  { code: '+65', name: 'Singapore', flag: '🇸🇬' },
+  { code: '+421', name: 'Slovakia', flag: '🇸🇰' },
+  { code: '+386', name: 'Slovenia', flag: '🇸🇮' },
+  { code: '+677', name: 'Solomon Islands', flag: '🇸🇧' },
+  { code: '+252', name: 'Somalia', flag: '🇸🇴' },
+  { code: '+27', name: 'South Africa', flag: '🇿🇦' },
+  { code: '+82', name: 'South Korea', flag: '🇰🇷' },
+  { code: '+211', name: 'South Sudan', flag: '🇸🇸' },
+  { code: '+34', name: 'Spain', flag: '🇪🇸' },
+  { code: '+94', name: 'Sri Lanka', flag: '🇱🇰' },
+  { code: '+249', name: 'Sudan', flag: '🇸🇩' },
+  { code: '+597', name: 'Suriname', flag: '🇸🇷' },
+  { code: '+46', name: 'Sweden', flag: '🇸🇪' },
+  { code: '+41', name: 'Switzerland', flag: '🇨🇭' },
+  { code: '+963', name: 'Syria', flag: '🇸🇾' },
+  { code: '+886', name: 'Taiwan', flag: '🇹🇼' },
+  { code: '+992', name: 'Tajikistan', flag: '🇹🇯' },
+  { code: '+255', name: 'Tanzania', flag: '🇹🇿' },
+  { code: '+66', name: 'Thailand', flag: '🇹🇭' },
+  { code: '+670', name: 'Timor-Leste', flag: '🇹🇱' },
+  { code: '+228', name: 'Togo', flag: '🇹🇬' },
+  { code: '+676', name: 'Tonga', flag: '🇹🇴' },
+  { code: '+1-868', name: 'Trinidad & Tobago', flag: '🇹🇹' },
+  { code: '+216', name: 'Tunisia', flag: '🇹🇳' },
+  { code: '+90', name: 'Turkey', flag: '🇹🇷' },
+  { code: '+993', name: 'Turkmenistan', flag: '🇹🇲' },
+  { code: '+688', name: 'Tuvalu', flag: '🇹🇻' },
+  { code: '+256', name: 'Uganda', flag: '🇺🇬' },
+  { code: '+380', name: 'Ukraine', flag: '🇺🇦' },
+  { code: '+971', name: 'United Arab Emirates', flag: '🇦🇪' },
+  { code: '+44', name: 'United Kingdom', flag: '🇬🇧' },
+  { code: '+1', name: 'United States', flag: '🇺🇸' },
+  { code: '+598', name: 'Uruguay', flag: '🇺🇾' },
+  { code: '+998', name: 'Uzbekistan', flag: '🇺🇿' },
+  { code: '+678', name: 'Vanuatu', flag: '🇻🇺' },
+  { code: '+379', name: 'Vatican City', flag: '🇻🇦' },
+  { code: '+58', name: 'Venezuela', flag: '🇻🇪' },
+  { code: '+84', name: 'Vietnam', flag: '🇻🇳' },
+  { code: '+967', name: 'Yemen', flag: '🇾🇪' },
+  { code: '+260', name: 'Zambia', flag: '🇿🇲' },
+  { code: '+263', name: 'Zimbabwe', flag: '🇿🇼' }
+];
 
 export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
   const [availability, setAvailability] = useState<any>(null);
@@ -90,11 +285,16 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
   const [errorMsg, setErrorMsg] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showCountrySelect, setShowCountrySelect] = useState(false);
+  const [searchCountry, setSearchCountry] = useState('');
   const [dateError, setDateError] = useState('');
   
+  const countrySelectRef = useRef<HTMLDivElement>(null);
+
   const [form, setForm] = useState({
     name: '',
     phone: '',
+    countryCode: '+91',
     date: null as Date | null,
     time: '',
     purpose: '',
@@ -122,19 +322,37 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
   useEffect(() => {
     if (isOpen) {
       setStep('form');
-      setForm({ name: '', phone: '', date: null, time: '', purpose: '', quickBook: false });
+      setForm({ name: '', phone: '', countryCode: '+91', date: null, time: '', purpose: '', quickBook: false });
       setErrors({ name: '', phone: '', date: '', time: '' });
       setShowCalendar(false);
       setShowTimePicker(false);
+      setShowCountrySelect(false);
+      setSearchCountry('');
       const d = new Date();
       d.setDate(1);
       setCurrentMonth(d);
     }
   }, [isOpen]);
 
-  const validateField = (name: string, value: any) => {
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (countrySelectRef.current && !countrySelectRef.current.contains(event.target as Node)) {
+        setShowCountrySelect(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const validateField = (name: string, value: any, currentCountryCode: string = form.countryCode) => {
     if (name === 'name') return /^[a-zA-Z\s]{2,}$/.test(value) ? '' : 'Please enter your full name';
-    if (name === 'phone') return /^\d{10}$/.test(value) ? '' : 'Please enter a valid 10-digit number';
+    if (name === 'phone') {
+      if (currentCountryCode === '+91') {
+        return /^\d{10}$/.test(value) ? '' : 'Please enter a valid 10-digit number';
+      } else {
+        return /^\d{7,15}$/.test(value) ? '' : 'Please enter a valid phone number';
+      }
+    }
     if (name === 'date') return value ? '' : 'Please select a preferred date';
     if (name === 'time') return value ? '' : 'Please select a preferred time';
     return '';
@@ -218,7 +436,7 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
     
     const payload = {
       name: form.name,
-      phone: `+91${form.phone}`,
+      phone: `${form.countryCode}${form.phone}`,
       preferred_date: form.date ? `${form.date.getFullYear()}-${String(form.date.getMonth() + 1).padStart(2, '0')}-${String(form.date.getDate()).padStart(2, '0')}` : undefined,
       preferred_time: form.time,
       purpose: form.purpose || null,
@@ -402,14 +620,81 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
                     
                     <div id="field-phone">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5 text-gray-500 font-medium">+91</span>
+                      <div className="flex relative">
+                        <div className="relative" ref={countrySelectRef}>
+                          <button
+                            type="button"
+                            onClick={() => setShowCountrySelect(!showCountrySelect)}
+                            className={`h-full flex items-center gap-1 border border-r-0 rounded-l-md px-3 bg-gray-50 hover:bg-gray-100 transition-colors ${errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                          >
+                            <span className="text-gray-700 font-medium">{form.countryCode}</span>
+                            <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+                          </button>
+                          
+                          <AnimatePresence>
+                            {showCountrySelect && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 5 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute top-12 left-0 z-50 w-56 bg-white rounded-md shadow-lg border border-gray-200 overflow-hidden"
+                              >
+                                <div className="p-2 border-b border-gray-100 sticky top-0 bg-white z-10">
+                                  <div className="relative">
+                                    <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2 top-2" />
+                                    <input
+                                      type="text"
+                                      placeholder="Search code/country"
+                                      className="w-full text-sm pl-7 pr-2 py-1.5 bg-gray-50 border border-gray-200 rounded outline-none focus:border-brand-blue"
+                                      value={searchCountry}
+                                      onChange={(e) => setSearchCountry(e.target.value)}
+                                      autoFocus
+                                    />
+                                  </div>
+                                </div>
+                                <div className="max-h-48 overflow-y-auto">
+                                  {countries
+                                    .filter(c => c.name.toLowerCase().includes(searchCountry.toLowerCase()) || c.code.includes(searchCountry))
+                                    .map(country => (
+                                    <button
+                                      key={country.name}
+                                      type="button"
+                                      onClick={() => {
+                                        setForm({...form, countryCode: country.code});
+                                        setShowCountrySelect(false);
+                                        if (form.phone) {
+                                          setErrors(prev => ({...prev, phone: validateField('phone', form.phone, country.code)}));
+                                        }
+                                      }}
+                                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between ${form.countryCode === country.code ? 'bg-brand-light text-brand-blue font-medium' : 'text-gray-700'}`}
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <span>{country.flag}</span>
+                                        <span>{country.name}</span>
+                                      </span>
+                                      <span className="text-gray-500">{country.code}</span>
+                                    </button>
+                                  ))}
+                                  {countries.filter(c => c.name.toLowerCase().includes(searchCountry.toLowerCase()) || c.code.includes(searchCountry)).length === 0 && (
+                                    <div className="px-3 py-3 text-sm text-gray-500 text-center">No results found</div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                         <input 
                           type="tel" 
-                          placeholder="10-digit mobile number" 
-                          className={`w-full border rounded-md pl-11 pr-3 py-2.5 focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-shadow ${errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                          placeholder={form.countryCode === '+91' ? "10-digit mobile number" : "Mobile number"} 
+                          className={`flex-1 min-w-0 border rounded-r-md px-3 py-2.5 focus:ring-2 focus:ring-brand-blue focus:border-transparent outline-none transition-shadow ${errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                           value={form.phone} 
-                          onChange={e => setForm({...form, phone: e.target.value.replace(/\D/g, '').slice(0,10)})} 
+                          onChange={e => {
+                            let newVal = e.target.value.replace(/\D/g, '');
+                            if (form.countryCode === '+91') newVal = newVal.slice(0, 10);
+                            else newVal = newVal.slice(0, 15);
+                            setForm({...form, phone: newVal});
+                          }} 
                           onBlur={() => handleBlur('phone')} 
                         />
                       </div>
@@ -533,7 +818,7 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
                   </div>
                   <h3 className="text-3xl font-serif text-gray-900 mb-3">You're all set, {form.name.split(' ')[0]}!</h3>
                   <p className="text-gray-600 mb-10 leading-relaxed max-w-sm">
-                    Vishal will personally reach out to confirm your call before <strong className="text-gray-900">{form.date?.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</strong> at <strong className="text-gray-900">{form.time}</strong>.
+                    Our team will reach out to confirm your call before <strong className="text-gray-900">{form.date?.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</strong> at <strong className="text-gray-900">{form.time}</strong>.
                     <br/><br/>We look forward to the conversation.
                   </p>
                   <div className="w-full space-y-3 mt-auto">

@@ -1,122 +1,164 @@
 import React from 'react';
 import ServicePageLayout from '../components/ServicePageLayout';
-import { Landmark, IndianRupee, Lock, Percent, Building2, ShieldCheck, Clock } from 'lucide-react';
+import { Landmark, ShieldCheck, TrendingUp, Landmark as Bank, Building2, HelpCircle } from 'lucide-react';
 
-export default function TaxSavingBonds({ openModal }: { openModal: () => void }) {
+export default function BondsAndFd({ openModal }: { openModal: () => void }) {
   return (
     <ServicePageLayout
-      heroTitle="Tax Saving Bonds (54EC)"
-      heroSubtitle="Just sold a property? Here's how to legally eliminate your capital gains tax."
-      heroEyebrow="CAPITAL GAINS EXEMPTION"
-      heroImage="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80"
+      heroTitle="Bonds & FD"
+      heroSubtitle="Preserve capital, earn predictable income, and choose fixed-income products with greater clarity."
+      heroEyebrow="BONDS & FIXED DEPOSITS"
+      heroImage="https://images.unsplash.com/photo-1554224154-26032ffc0d07?auto=format&fit=crop&q=80"
       
-      introHeading="Sold a property held for more than 2 years?"
+      introHeading="Fixed-income investing deserves the same rigor as equity investing."
       introContent={
         <>
-          <p className="mb-4">You owe Long-Term Capital Gains tax — and depending on the sale value, that can be a significant amount.</p>
-          <p>Most people find out too late. Section 54EC gives you a legal, government-approved route to avoid this tax entirely — but only if you act within 6 months of the sale.</p>
+          <p className="mb-4">Whether you're evaluating tax-saving bonds, RBI bonds, corporate bonds, company FDs, or NBFC FDs, Solitaire helps you select the right option based on safety, tenure, liquidity, and return expectations.</p>
+          <p className="mb-4">Many investors choose bonds or fixed deposits based only on headline returns. In reality, the right decision depends on a deeper mix of factors — issuer quality, lock-in, liquidity, taxation, payout structure, and how the instrument fits into your broader financial plan.</p>
+          <p>At Solitaire, the focus is not just on helping you invest. The focus is on helping you invest with context — so the product you choose matches your goals, not just the rate being advertised.</p>
         </>
       }
       
-      capabilitiesHeading="What Are 54EC Bonds?"
+      capabilitiesHeading="What Falls Under Bonds & FD"
       capabilitiesList={[
         {
-          title: "Eligible for",
-          description: "LTCG from sale of land or building",
+          title: "Bonds",
+          description: (
+            <div>
+              <p className="mb-2">A range of fixed-income instruments designed for stability, income generation, and selective tax efficiency.</p>
+              <div className="text-sm font-medium text-brand-gold uppercase tracking-wider">Categories</div>
+              <p className="text-gray-900">Tax Saving Bonds (54EC), RBI Bonds, Corporate Bonds</p>
+            </div>
+          ),
           icon: <Landmark className="w-5 h-5" />
         },
         {
-          title: "Investment limit",
-          description: "₹50 lakhs per financial year",
-          icon: <IndianRupee className="w-5 h-5" />
+          title: "Fixed Deposits",
+          description: (
+            <div>
+              <p className="mb-2">Structured deposit options for investors seeking predictable returns over defined tenures.</p>
+              <div className="text-sm font-medium text-brand-gold uppercase tracking-wider">Categories</div>
+              <p className="text-gray-900">Company FD, NBFC FD</p>
+            </div>
+          ),
+          icon: <Bank className="w-5 h-5" />
         },
         {
-          title: "Lock-in period",
-          description: "5 years",
-          icon: <Lock className="w-5 h-5" />
-        },
-        {
-          title: "Interest rate",
-          description: "~5% p.a. (taxable)",
-          icon: <Percent className="w-5 h-5" />
-        },
-        {
-          title: "Issuers",
-          description: "REC, NHAI (Government-backed)",
-          icon: <Building2 className="w-5 h-5" />
-        },
-        {
-          title: "Safety",
-          description: "No credit risk",
+          title: "What We Evaluate",
+          description: "Safety, issuer strength, tenure, liquidity, taxation, payout options, and suitability within your portfolio.",
           icon: <ShieldCheck className="w-5 h-5" />
         },
         {
-          title: "Deadline",
-          description: <span className="font-semibold text-red-600">Within 6 months of sale — non-negotiable</span>,
-          icon: <Clock className="w-5 h-5 text-red-600" />
+          title: "Who It Suits",
+          description: "Investors prioritizing capital protection, regular income, tax planning, and lower volatility allocation.",
+          icon: <TrendingUp className="w-5 h-5" />
         }
       ]}
       
-      promiseHeading="How Solitaire Helps You"
-      promiseHighlight={{
-        eyebrow: "TAX SAVING EXAMPLE",
-        title: "How the Tax Saving Works",
-        description: (
-          <ul className="space-y-3 font-mono text-sm md:text-base mt-4">
-            <li className="flex justify-between border-b border-brand-gold/20 pb-2"><span>Property sold for</span> <span>₹1.2 crore</span></li>
-            <li className="flex justify-between border-b border-brand-gold/20 pb-2"><span>Indexed cost</span> <span>₹50 lakhs</span></li>
-            <li className="flex justify-between border-b border-brand-gold/20 pb-2 font-semibold text-gray-900"><span>LTCG</span> <span>₹70 lakhs</span></li>
-            <li className="flex justify-between border-b border-brand-gold/20 pb-2 text-red-600"><span>Tax due (approx)</span> <span>₹14 lakhs</span></li>
-            <li className="flex justify-between border-b border-brand-gold/20 pb-2 text-green-600 font-semibold"><span>Invest in 54EC bonds</span> <span>₹70 lakhs</span></li>
-            <li className="flex justify-between pt-2 font-bold text-xl text-brand-blue"><span>Tax liability</span> <span>₹0</span></li>
-          </ul>
-        )
-      }}
+      promiseHeading="How Solitaire Helps You Choose Better"
       promiseList={[
         {
-          title: "Eligibility check",
-          description: "Confirm your sale qualifies and calculate your exact liability."
+          title: "Suitability First",
+          description: "Understand whether bonds, fixed deposits, or a combination of both best fits your return expectations, liquidity needs, and risk comfort."
         },
         {
-          title: "Deadline management",
-          description: "Track your 6-month window and ensure timely action."
+          title: "Curated Product Selection",
+          description: "Compare 54EC bonds, RBI bonds, corporate bonds, company FDs, and NBFC FDs through a practical lens — not just on yield, but on quality and fit."
         },
         {
-          title: "End-to-end application",
-          description: "Issuer selection, paperwork, and documentation."
+          title: "Structured Guidance",
+          description: "Get support with product evaluation, paperwork, application steps, and execution."
         },
         {
-          title: "Tax plan integration",
-          description: "Fit the 54EC investment into your broader tax strategy."
+          title: "Portfolio-Level Thinking",
+          description: "Position fixed-income products within a broader tax, cash-flow, and wealth strategy instead of treating them as isolated purchases."
         },
         {
-          title: "Multi-year structuring",
-          description: "Where gains exceed ₹50L, plan across financial years where possible."
+          title: "Risk-Aware Filtering",
+          description: "Avoid unsuitable products by assessing lock-in periods, credit profile, issuer credibility, and liquidity constraints before investing."
         }
       ]}
       
-      audienceHeading="Who Is This For?"
+      audienceHeading="Who This Is Built For"
       audienceList={[
         {
-          title: "Property Sellers",
-          description: "Anyone who has recently sold — or is about to sell — property held for 2+ years."
+          title: "Tax-Conscious Investors",
+          description: "Those exploring 54EC bonds as part of a capital gains planning strategy."
         },
         {
-          title: "Tax Planners",
-          description: "Those facing a large LTCG liability looking for a legal exemption route."
+          title: "Conservative Allocators",
+          description: "Investors looking for fixed-income exposure with greater predictability than market-linked assets."
         },
         {
-          title: "NRIs",
-          description: "NRIs managing property sale tax obligations in India."
+          title: "Income-Oriented Families",
+          description: "Individuals and households seeking steady interest income and better visibility into returns."
         },
         {
-          title: "Inheritance",
-          description: "Families selling inherited property."
+          title: "Portfolio Builders",
+          description: "Investors who want to diversify across debt products with a clearer understanding of safety, taxation, and liquidity."
+        },
+        {
+          title: "Retirees and Near-Retirees",
+          description: "Those prioritizing capital protection, dependable cash flows, and simplicity in financial decision-making."
         }
       ]}
       
+      ctaTitle="Choose fixed-income products with more clarity — and fewer blind spots."
+      ctaSubtitle="Book a no-obligation conversation with Solitaire to evaluate which bond or FD options make sense for your goals, liquidity needs, and risk profile."
       ctaText="Book a Free Call"
       openModal={openModal}
-    />
+    >
+      {/* Explanatory / Education Section */}
+      <section className="py-20 lg:py-32 bg-white border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-16">
+            <p className="text-gray-400 text-xs tracking-widest uppercase mb-4 font-medium">EXPLANATORY / EDUCATION SECTION</p>
+            <h2 className="text-4xl md:text-5xl font-serif text-gray-900 leading-tight">Fixed-Income Options, Clearly Explained</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="bg-brand-light p-8 rounded-sm border border-brand-gold/10">
+              <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-brand-gold mb-6 shadow-sm">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-serif text-gray-900 mb-4">Tax Saving Bonds (54EC)</h3>
+              <p className="text-gray-600 leading-relaxed text-sm">Useful for investors looking to claim eligible capital gains exemption after the sale of qualifying property, subject to timelines and legal conditions.</p>
+            </div>
+            
+            <div className="bg-brand-light p-8 rounded-sm border border-brand-gold/10">
+              <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-brand-gold mb-6 shadow-sm">
+                <Landmark className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-serif text-gray-900 mb-4">RBI Bonds</h3>
+              <p className="text-gray-600 leading-relaxed text-sm">Government-backed instruments suited for investors who place a premium on safety, credibility, and predictable fixed-income allocation.</p>
+            </div>
+            
+            <div className="bg-brand-light p-8 rounded-sm border border-brand-gold/10">
+              <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-brand-gold mb-6 shadow-sm">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-serif text-gray-900 mb-4">Corporate Bonds</h3>
+              <p className="text-gray-600 leading-relaxed text-sm">Potentially higher-yield debt instruments issued by companies, appropriate for investors willing to assess credit quality more carefully in exchange for better return potential.</p>
+            </div>
+            
+            <div className="bg-brand-light p-8 rounded-sm border border-brand-gold/10">
+              <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-brand-gold mb-6 shadow-sm">
+                <HelpCircle className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-serif text-gray-900 mb-4">Company FD</h3>
+              <p className="text-gray-600 leading-relaxed text-sm">Fixed deposits offered by corporates, often appealing to investors seeking better rates than traditional deposits while remaining selective about issuer quality.</p>
+            </div>
+            
+            <div className="bg-brand-light p-8 rounded-sm border border-brand-gold/10">
+              <div className="w-10 h-10 bg-white rounded flex items-center justify-center text-brand-gold mb-6 shadow-sm">
+                <HelpCircle className="w-5 h-5" />
+              </div>
+              <h3 className="text-xl font-serif text-gray-900 mb-4">NBFC FD</h3>
+              <p className="text-gray-600 leading-relaxed text-sm">Deposit products issued by non-banking financial companies, suitable when evaluated carefully for credit strength, tenure, and payout structure.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </ServicePageLayout>
   );
 }

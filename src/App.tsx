@@ -9,7 +9,8 @@ import PmsAifSif from './pages/PmsAifSif';
 import FinancialPlanning from './pages/FinancialPlanning';
 import MutualFunds from './pages/MutualFunds';
 import EquityDerivatives from './pages/EquityDerivatives';
-import TaxSavingBonds from './pages/TaxSavingBonds';
+import LifeInsurance from './pages/LifeInsurance';
+import BondsAndFd from './pages/TaxSavingBonds';
 import AboutUs from './pages/AboutUs';
 import AdminDashboard from './pages/AdminDashboard';
 import Blog from './pages/Blog';
@@ -382,7 +383,8 @@ const Services = () => {
     { title: "Financial Planning", desc: "A roadmap to achieve your life goals through disciplined financial management.", img: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=400&auto=format&fit=crop", link: "/services/financial-planning" },
     { title: "Mutual Funds", desc: "Curated fund portfolios across equity, debt, and hybrid categories to suit your goals.", img: "https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?q=80&w=400&auto=format&fit=crop", link: "/services/mutual-funds" },
     { title: "Equity / Derivatives / SLBM", desc: "Active market participation with access to equity, derivatives, and SLBM through a systematic approach", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=400&auto=format&fit=crop", link: "/services/equity-derivatives-slbm" },
-    { title: "Tax Saving Bonds (54EC)", desc: "Save capital gains tax on property sale by investing in government backed 54EC bonds.", img: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?q=80&w=400&auto=format&fit=crop", link: "/services/tax-saving-bonds" },
+    { title: "Life Insurance", desc: "The right cover, chosen for the right reasons — built around your life, not a sales target.", img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=400&auto=format&fit=crop", link: "/services/life-insurance" },
+    { title: "Bonds & FD", desc: "Preserve capital, earn predictable income, and choose fixed-income products with greater clarity.", img: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?q=80&w=400&auto=format&fit=crop", link: "/services/tax-saving-bonds" },
   ];
 
   return (
@@ -618,7 +620,8 @@ export default function App() {
           <Route path="/services/financial-planning" element={<FinancialPlanning openModal={() => setIsModalOpen(true)} />} />
           <Route path="/services/mutual-funds" element={<MutualFunds openModal={() => setIsModalOpen(true)} />} />
           <Route path="/services/equity-derivatives-slbm" element={<EquityDerivatives openModal={() => setIsModalOpen(true)} />} />
-          <Route path="/services/tax-saving-bonds" element={<TaxSavingBonds openModal={() => setIsModalOpen(true)} />} />
+          <Route path="/services/life-insurance" element={<LifeInsurance openModal={() => setIsModalOpen(true)} />} />
+          <Route path="/services/tax-saving-bonds" element={<BondsAndFd openModal={() => setIsModalOpen(true)} />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/blog" element={<Blog />} />
         </Routes>

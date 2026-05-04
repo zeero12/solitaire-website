@@ -9,6 +9,30 @@ const DEFAULT_AVAILABILITY = {
   blockedWeekdays: [0]
 };
 
+const getBookingSortKey = (booking: any) => {
+  const dateStr = booking.date || booking.preferred_date || '';
+  if (!dateStr) return '9999-99-999999';
+  const timeStr = booking.time || booking.preferred_time || '';
+  
+  let hrs = 0, mins = 0;
+  if (timeStr) {
+    const match = timeStr.match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
+    if (match) {
+      hrs = parseInt(match[1]);
+      mins = parseInt(match[2]);
+      if (match[3]) {
+        if (match[3].toUpperCase() === 'PM' && hrs < 12) hrs += 12;
+        if (match[3].toUpperCase() === 'AM' && hrs === 12) hrs = 0;
+      }
+    }
+  }
+  
+  const paddedHrs = String(hrs).padStart(2, '0');
+  const paddedMins = String(mins).padStart(2, '0');
+  
+  return `${dateStr}${paddedHrs}${paddedMins}`;
+};
+
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
   const [email, setEmail] = useState('');
@@ -17,7 +41,8 @@ export default function AdminDashboard() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'bookings' | 'blogs' | 'availability'>('bookings');
-  const [bookingTab, setBookingTab] = useState<'active' | 'history'>('active');
+  const [bookingTab, setBookingTab] = useState<'new' | 'confirmed' | 'history'>('new');
+  const [confirmedSortMode, setConfirmedSortMode] = useState<'earliest' | 'recent'>('earliest');
   const [proposingFor, setProposingFor] = useState<string | null>(null);
   const [newSlotDate, setNewSlotDate] = useState('');
   const [newSlotTime, setNewSlotTime] = useState('');
@@ -367,7 +392,10 @@ export default function AdminDashboard() {
     }
     const result = await rescheduleBooking(bookingId, newSlotDate, newSlotTime);
     if (result.success) {
-      showNotification('New slot proposed successfully.', 'info', 'Booking Rescheduled');
+      const booking = bookings.find(b => b.id === bookingId);
+      if (booking) openWhatsapp(booking, 'propose');
+      
+      showNotification(`New slot proposed. WhatsApp message opened for ${booking.name}.`, 'info', 'Booking Rescheduled');
       setProposingFor(null);
       setNewSlotDate('');
       setNewSlotTime('');
@@ -447,10 +475,10 @@ export default function AdminDashboard() {
   }
 
   const pendingCount = bookings.filter(b => b.status === 'new' || b.status === 'Pending').length;
-  const acceptedCount = bookings.filter(b => b.status === 'Accepted' || b.status === 'confirmed').length;
+  const acceptedCount = bookings.filter(b => ['confirmed', 'Accepted', 'rescheduled'].includes(b.status)).length;
   
   const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const confirmedThisWeekCount = bookings.filter(b => (b.status === 'Accepted' || b.status === 'confirmed') && (b.updated_at?.toMillis ? b.updated_at.toMillis() > oneWeekAgo : true)).length;
+  const confirmedThisWeekCount = bookings.filter(b => ['confirmed', 'Accepted', 'rescheduled'].includes(b.status) && (b.updated_at?.toMillis ? b.updated_at.toMillis() > oneWeekAgo : true)).length;
   const completedTotalCount = bookings.filter(b => b.status === 'completed').length;
 
   return (
@@ -522,10 +550,16 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="flex border-b border-gray-200">
               <button 
-                className={`flex-1 py-3 font-medium text-sm text-center ${bookingTab === 'active' ? 'bg-gray-50 text-brand-blue border-b-2 border-brand-blue' : 'text-gray-500 hover:text-gray-700'}`}
-                onClick={() => setBookingTab('active')}
+                className={`flex-1 py-3 font-medium text-sm text-center ${bookingTab === 'new' ? 'bg-gray-50 text-brand-blue border-b-2 border-brand-blue' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setBookingTab('new')}
               >
-                Active
+                New Requests
+              </button>
+              <button 
+                className={`flex-1 py-3 font-medium text-sm text-center ${bookingTab === 'confirmed' ? 'bg-gray-50 text-brand-blue border-b-2 border-brand-blue' : 'text-gray-500 hover:text-gray-700'}`}
+                onClick={() => setBookingTab('confirmed')}
+              >
+                Confirmed
               </button>
               <button 
                 className={`flex-1 py-3 font-medium text-sm text-center ${bookingTab === 'history' ? 'bg-gray-50 text-brand-blue border-b-2 border-brand-blue' : 'text-gray-500 hover:text-gray-700'}`}
@@ -534,6 +568,25 @@ export default function AdminDashboard() {
                 History
               </button>
             </div>
+            {bookingTab === 'confirmed' && (
+              <div className="border-b border-gray-200 px-6 py-3 flex justify-between items-center bg-gray-50/50">
+                <span className="text-sm font-medium text-gray-500">Sort by:</span>
+                <div className="flex bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+                  <button 
+                    onClick={() => setConfirmedSortMode('earliest')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${confirmedSortMode === 'earliest' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Earliest Scheduled Meeting
+                  </button>
+                  <button 
+                    onClick={() => setConfirmedSortMode('recent')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${confirmedSortMode === 'recent' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Recently Approved
+                  </button>
+                </div>
+              </div>
+            )}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -547,13 +600,26 @@ export default function AdminDashboard() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {bookings
-                  .filter(b => bookingTab === 'active' 
-                    ? ['new', 'Pending', 'confirmed', 'Accepted', 'rescheduled'].includes(b.status)
-                    : ['completed', 'no-show', 'cancelled'].includes(b.status)
-                  )
+                  .filter(b => {
+                    if (bookingTab === 'new') return ['new', 'Pending'].includes(b.status);
+                    if (bookingTab === 'confirmed') return ['confirmed', 'Accepted', 'rescheduled'].includes(b.status);
+                    return ['completed', 'no-show', 'cancelled'].includes(b.status);
+                  })
                   .sort((a, b) => {
-                    if (bookingTab === 'active') {
-                      return new Date(a.date || a.preferred_date || 0).getTime() - new Date(b.date || b.preferred_date || 0).getTime();
+                    if (bookingTab === 'new') {
+                      const timeA = a.created_at?.toMillis ? a.created_at.toMillis() : new Date(a.date || a.preferred_date || 0).getTime();
+                      const timeB = b.created_at?.toMillis ? b.created_at.toMillis() : new Date(b.date || b.preferred_date || 0).getTime();
+                      return timeB - timeA;
+                    } else if (bookingTab === 'confirmed') {
+                      if (confirmedSortMode === 'earliest') {
+                        const valA = getBookingSortKey(a);
+                        const valB = getBookingSortKey(b);
+                        return valA.localeCompare(valB);
+                      } else {
+                        const timeA = a.updated_at?.toMillis ? a.updated_at.toMillis() : 0;
+                        const timeB = b.updated_at?.toMillis ? b.updated_at.toMillis() : 0;
+                        return timeB - timeA;
+                      }
                     } else {
                       return (b.updated_at?.toMillis ? b.updated_at.toMillis() : 0) - (a.updated_at?.toMillis ? a.updated_at.toMillis() : 0);
                     }
@@ -641,11 +707,10 @@ export default function AdminDashboard() {
                                 <Calendar className="w-3.5 h-3.5" /> Propose Slot
                               </button>
                               <button
-                                onClick={() => openWhatsapp(booking, 'followup')}
-                                className="inline-flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                                title="WhatsApp follow-up"
+                                onClick={() => handleCancel(booking.id)}
+                                className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
                               >
-                                <Phone className="w-3.5 h-3.5" /> WhatsApp
+                                Cancel
                               </button>
                             </div>
 
@@ -668,7 +733,7 @@ export default function AdminDashboard() {
                                   onClick={() => handleSendProposal(booking.id)}
                                   className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
                                 >
-                                  Send
+                                  Confirm
                                 </button>
                                 <button
                                   onClick={() => setProposingFor(null)}
@@ -683,42 +748,73 @@ export default function AdminDashboard() {
 
                         {/* STATUS: confirmed or Accepted */}
                         {(booking.status === 'confirmed' || booking.status === 'Accepted') && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleMarkComplete(booking.id)}
-                              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Complete
-                            </button>
-                            <button
-                              onClick={() => handleMarkNoShow(booking.id)}
-                              className="inline-flex items-center gap-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                            >
-                              <User className="w-3.5 h-3.5" /> No-Show
-                            </button>
-                            <button
-                              onClick={() => handleCancel(booking.id)}
-                              className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => openWhatsapp(booking, 'accept')}
-                              className="inline-flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                              title="Send WhatsApp confirmation"
-                            >
-                              <Phone className="w-3.5 h-3.5" /> WhatsApp
-                            </button>
-                            <a
-                              href={generateCalendarLink(booking)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                              title="Add to Google Calendar"
-                            >
-                              <CalendarDays className="w-3.5 h-3.5" /> Calendar
-                            </a>
-                          </div>
+                          <>
+                            <div className="flex flex-wrap justify-end items-center gap-2">
+                              <button
+                                onClick={() => handleMarkComplete(booking.id)}
+                                className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Complete
+                              </button>
+                              <button
+                                onClick={() => handleMarkNoShow(booking.id)}
+                                className="inline-flex items-center gap-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                              >
+                                <User className="w-3.5 h-3.5" /> No-Show
+                              </button>
+                              <button
+                                onClick={() => setProposingFor(proposingFor === booking.id ? null : booking.id)}
+                                className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                              >
+                                <Calendar className="w-3.5 h-3.5" /> Reschedule
+                              </button>
+                              <button
+                                onClick={() => handleCancel(booking.id)}
+                                className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <a
+                                href={generateCalendarLink(booking)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                                title="Add to Google Calendar"
+                              >
+                                <CalendarDays className="w-3.5 h-3.5" /> Calendar
+                              </a>
+                            </div>
+
+                            {/* Inline propose new slot form for confirmed */}
+                            {proposingFor === booking.id && (
+                              <div className="flex justify-end items-center gap-2 mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <input
+                                  type="date"
+                                  value={newSlotDate}
+                                  onChange={e => setNewSlotDate(e.target.value)}
+                                  className="border border-gray-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-blue outline-none"
+                                />
+                                <input
+                                  type="time"
+                                  value={newSlotTime}
+                                  onChange={e => setNewSlotTime(e.target.value)}
+                                  className="border border-gray-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-brand-blue outline-none"
+                                />
+                                <button
+                                  onClick={() => handleSendProposal(booking.id)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => setProposingFor(null)}
+                                  className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1 rounded text-xs font-medium transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            )}
+                          </>
                         )}
 
                         {/* STATUS: rescheduled */}
@@ -735,12 +831,6 @@ export default function AdminDashboard() {
                               className="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
                             >
                               Cancel
-                            </button>
-                            <button
-                              onClick={() => openWhatsapp(booking, 'propose')}
-                              className="inline-flex items-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                            >
-                              <Phone className="w-3.5 h-3.5" /> WhatsApp
                             </button>
                           </div>
                         )}

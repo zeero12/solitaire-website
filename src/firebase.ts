@@ -82,7 +82,9 @@ const firebaseConfig = {
 
 // Initialize Firebase with provided config or fallbacks
 const app = initializeApp(firebaseConfig);
-export const db = initializeFirestore(app, { experimentalForceLongPolling: true });
+export const db = initializeFirestore(app, { 
+  experimentalAutoDetectLongPolling: true
+});
 export const auth = getAuth(app);
 
 const isDemo = firebaseConfig.apiKey === "demo-api-key";

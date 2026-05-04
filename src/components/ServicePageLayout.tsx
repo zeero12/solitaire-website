@@ -49,6 +49,7 @@ interface ServicePageLayoutProps {
   ctaSubtitle?: string;
   ctaText: string;
   openModal: () => void;
+  children?: ReactNode;
 }
 
 const SERVICES = [
@@ -57,7 +58,8 @@ const SERVICES = [
   { path: '/services/financial-planning', title: 'Financial Planning' },
   { path: '/services/mutual-funds', title: 'Mutual Funds' },
   { path: '/services/equity-derivatives-slbm', title: 'Equity / Derivatives' },
-  { path: '/services/tax-saving-bonds', title: 'Tax Saving Bonds' },
+  { path: '/services/life-insurance', title: 'Life Insurance' },
+  { path: '/services/tax-saving-bonds', title: 'Bonds & FD' },
 ];
 
 export default function ServicePageLayout({
@@ -86,7 +88,8 @@ export default function ServicePageLayout({
   ctaTitle = "Ready to build a plan that works for your life?",
   ctaSubtitle = "Schedule a no-obligation call with our team.",
   ctaText,
-  openModal
+  openModal,
+  children
 }: ServicePageLayoutProps) {
   const location = useLocation();
   const currentIndex = SERVICES.findIndex(s => s.path === location.pathname);
@@ -232,6 +235,8 @@ export default function ServicePageLayout({
           </div>
         </div>
       </section>
+
+      {children}
 
       {/* CTA Section */}
       <section className="py-20 lg:py-32 bg-brand-light text-center relative">
