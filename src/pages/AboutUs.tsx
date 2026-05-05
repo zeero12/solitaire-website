@@ -7,7 +7,7 @@ export default function AboutUs({ openModal }: { openModal: () => void }) {
     <div className="bg-white min-h-screen">
       <ServiceHero 
         title="About Us" 
-        subtitle="Solitaire Financial Solutions is a client-focused financial services practice with 25 years of experience — built on a single founding principle: that every individual and business deserves a disciplined, transparent, and long-term approach to managing their financial future." 
+        subtitle="Solitaire Financial Solutions is a client-focused financial services practice with 25+ years of experience — built on a single founding principle: that every individual and business deserves a disciplined, transparent, and long-term approach to managing their financial future." 
         subtitleClassName="text-brand-gold"
       />
       

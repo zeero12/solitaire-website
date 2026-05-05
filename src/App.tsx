@@ -570,9 +570,12 @@ const Footer = () => (
       </div>
       
       <div className="border-t border-white/10 pt-8 flex flex-col items-center gap-6 text-center">
-        <div className="max-w-4xl">
+        <div className="max-w-4xl space-y-2">
+          <p className="text-sm font-semibold text-white uppercase tracking-widest">
+            Solitaire Financial Solutions
+          </p>
           <p className="text-[10px] md:text-xs text-gray-400 leading-relaxed uppercase tracking-wider">
-            Solitaire Financial Solutions — AMFI Registered Mutual Fund Distributor | Registered with SEBI as Authorised Person of R WADIWALA SECURITIES PVT LTD | Mutual fund investments are subject to market risks. Please read all scheme-related documents carefully before investing.
+            AMFI Registered Mutual Fund Distributor | Registered with SEBI as Authorised Person of R WADIWALA SECURITIES PVT LTD | Mutual fund investments are subject to market risks. Please read all scheme-related documents carefully before investing.
           </p>
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center w-full gap-4 text-xs text-gray-400">
