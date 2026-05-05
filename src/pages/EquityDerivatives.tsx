@@ -5,7 +5,7 @@ import { LineChart, ShieldAlert, ArrowRightLeft } from 'lucide-react';
 export default function EquityDerivatives({ openModal }: { openModal: () => void }) {
   return (
     <ServicePageLayout
-      heroTitle="Equity / Derivatives / SLBM"
+      heroTitle="Equity / SLBM"
       heroSubtitle="Active market participation — with strategy, discipline, and expert guidance."
       heroEyebrow="DIRECT MARKET PARTICIPATION"
       heroImage="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80"
@@ -21,7 +21,7 @@ export default function EquityDerivatives({ openModal }: { openModal: () => void
       capabilitiesHeading="What We Cover"
       capabilitiesList={[
         {
-          title: "Direct Equity Investing",
+          title: "Equity Investing",
           description: (
             <ul className="space-y-2 list-disc pl-4 mt-2">
               <li>Stock-level portfolios built on fundamentals — not tips or momentum.</li>
@@ -80,11 +80,7 @@ export default function EquityDerivatives({ openModal }: { openModal: () => void
         },
         {
           title: "Portfolio Building",
-          description: "Build equity portfolios with a fundamentals-first approach."
-        },
-        {
-          title: "Strategy Explanation",
-          description: "Explain derivatives strategies — risk, margins, and realistic outcomes — in plain language."
+          description: "Build portfolios with a fundamentals-first approach."
         },
         {
           title: "SLBM Setup",

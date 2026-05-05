@@ -50,7 +50,7 @@ export default function WealthManagement({ openModal }: { openModal: () => void 
       promiseHeading="How Solitaire Helps You"
       promiseHighlight={{
         eyebrow: "DEDICATED ADVISORY ACCESS",
-        title: "Every client at Solitaire works with a dedicated advisory team — not a call centre, not a ticketing system.",
+        title: "When you reach out to Solitaire, you reach someone who understands your goals — not a system, not a script.",
         description: "When you reach out, a qualified professional who knows your financial goals will get back to you. Always."
       }}
       promiseList={[
@@ -83,8 +83,8 @@ export default function WealthManagement({ openModal }: { openModal: () => void 
           description: "Busy professionals planning for financial independence or aiming for early retirement."
         },
         {
-          title: "High Networth Individuals",
-          description: "HNIs looking for one trusted advisor to simplify a complex financial picture across geographies."
+          title: "High Net Worth Individuals",
+          description: "HNIs looking for one trusted wealth manager to simplify a complex financial picture across geographies."
         }
       ]}
       

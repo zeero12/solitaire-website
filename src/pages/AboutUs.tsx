@@ -7,7 +7,7 @@ export default function AboutUs({ openModal }: { openModal: () => void }) {
     <div className="bg-white min-h-screen">
       <ServiceHero 
         title="About Us" 
-        subtitle="Solitaire Financial Solutions is a client-focused financial services practice built on a single founding principle: that every individual and business deserves a disciplined, transparent, and long-term approach to managing their financial future." 
+        subtitle="Solitaire Financial Solutions is a client-focused financial services practice with 25 years of experience — built on a single founding principle: that every individual and business deserves a disciplined, transparent, and long-term approach to managing their financial future." 
         subtitleClassName="text-brand-gold"
       />
       
@@ -23,7 +23,7 @@ export default function AboutUs({ openModal }: { openModal: () => void }) {
           </div>
           
           <div className="lg:w-7/12 space-y-6 text-gray-700 text-lg leading-relaxed text-justify">
-            <h2 className="text-3xl md:text-4xl font-serif text-brand-blue mb-8 text-left">Meet Vishal Dalal</h2>
+            <h2 className="text-4xl md:text-5xl font-serif text-brand-blue mb-10 tracking-tight text-left">Meet Mr. Vishal Dalal</h2>
             <p>Vishal Dalal is the founder of Solitaire Financial Solutions, with years of hands-on experience guiding individuals, families, and businesses through the complexities of financial planning and wealth creation.</p>
             <p>His work spans mutual funds, capital markets, fixed income instruments, and insurance — always calibrated to each client's specific objectives, risk appetite, and long-term vision.</p>
             <p>What distinguishes Vishal's approach is not just technical expertise, but the quality of relationships he builds. He works closely with clients to understand their evolving financial priorities, provides clarity at every stage of the engagement, and ensures that every decision is well-informed and purposeful.</p>

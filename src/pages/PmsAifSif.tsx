@@ -10,7 +10,7 @@ export default function PmsAifSif({ openModal }: { openModal: () => void }) {
       heroEyebrow="ADVANCED INVESTMENT STRATEGIES"
       heroImage="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80"
       
-      introHeading="At a certain stage, standard mutual funds are no longer enough."
+      introHeading="Beyond a certain level of wealth, diversification demands more than mutual funds can offer."
       introContent={
         <>
           <p className="mb-4">You want more transparency, more customisation, and access to strategies beyond the retail fund universe.</p>
@@ -97,11 +97,11 @@ export default function PmsAifSif({ openModal }: { openModal: () => void }) {
       audienceList={[
         {
           title: "Growing Wealth",
-          description: "Investors with ₹10L+ exploring SIFs or ₹50L+ considering PMS."
+          description: "Investors with ₹10L+ exploring SIFs or ₹50L+ considering PMS or ₹1Cr+ can invest in AIF."
         },
         {
           title: "High Networth Individuals",
-          description: "HNIs wanting more than mutual funds can offer."
+          description: "HNIs ready for the next level of portfolio sophistication."
         },
         {
           title: "Sophisticated Investors",

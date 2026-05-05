@@ -38,13 +38,14 @@ export const FormattedNumberInput = ({ value, onChange, min, max, className }: a
   };
 
   const handleBlur = () => {
-    setIsFocused(false);
     let parsed = Number(localValue.replace(/,/g, ''));
     if (isNaN(parsed)) parsed = min || 0;
     if (min !== undefined && parsed < min) parsed = min;
     if (max !== undefined && parsed > max) parsed = max;
+    
     onChange(parsed);
     setLocalValue(parsed.toLocaleString('en-IN'));
+    setIsFocused(false);
   };
 
   return (
@@ -65,9 +66,30 @@ const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
   const [rate, setRate] = useState(12);
   const [years, setYears] = useState(10);
 
-  const investedAmount = type === 'sip' ? investment * 12 * years : investment;
-  const estReturns = investedAmount * (rate / 100) * (years / 2); // Very rough approximation for visual
-  const totalValue = investedAmount + estReturns;
+  const computeReturns = () => {
+    let invested = 0;
+    let total = 0;
+    
+    if (type === 'sip') {
+      const i = rate / 12 / 100;
+      const n = years * 12;
+      invested = investment * n;
+      // SIP future value formula: P * [((1+i)^n - 1) / i] * (1+i)
+      total = investment * ((Math.pow(1 + i, n) - 1) / i) * (1 + i);
+    } else {
+      invested = investment;
+      // Lumpsum future value formula: P * (1+r)^n
+      total = investment * Math.pow(1 + rate / 100, years);
+    }
+    
+    return {
+      investedAmount: Math.round(invested),
+      totalValue: Math.round(total),
+      estReturns: Math.round(total - invested)
+    };
+  };
+
+  const { investedAmount, totalValue, estReturns } = computeReturns();
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
@@ -100,7 +122,7 @@ const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
                   value={investment || 0}
                   onChange={setInvestment}
                   min={type === 'sip' ? 500 : 10000}
-                  max={type === 'sip' ? 1000000 : 10000000}
+                  max={type === 'sip' ? 10000000 : 100000000}
                 />
               </div>
             </div>
@@ -110,7 +132,7 @@ const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
               value={investment} 
               onChange={(e) => setInvestment(Number(e.target.value))}
               min={type === 'sip' ? 500 : 10000} 
-              max={type === 'sip' ? 1000000 : 10000000} 
+              max={type === 'sip' ? 10000000 : 100000000} 
               step={type === 'sip' ? 500 : 10000}
             />
           </div>
@@ -159,6 +181,13 @@ const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
               onChange={(e) => setYears(Number(e.target.value))}
               min="1" max="40" step="1"
             />
+          </div>
+
+          <div className="bg-brand-light rounded-lg p-5 mt-8 border border-brand-gold/10">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-700 font-medium">Total Wealth</span>
+              <span className="text-2xl font-bold text-brand-blue">{formatCurrency(totalValue)}</span>
+            </div>
           </div>
 
           <div className="pt-6 space-y-4">
@@ -230,16 +259,57 @@ const RetirementCalculator = ({ openModal }: { openModal: () => void }) => {
   const [postRetirementReturn, setPostRetirementReturn] = useState(7);
   const [existingFund, setExistingFund] = useState(500000);
 
-  // Simplified calculation for visual purposes
-  const yearsToRetire = Math.max(0, retirementAge - currentAge);
-  const yearsInRetirement = Math.max(0, lifeExpectancy - retirementAge);
-  
-  const futureMonthlyExpense = monthlyIncome * Math.pow(1 + inflation / 100, yearsToRetire);
-  const annualIncomeRequired = futureMonthlyExpense * 12;
-  
-  // Very rough approximation for corpus required
-  const realReturn = ((1 + postRetirementReturn / 100) / (1 + inflation / 100)) - 1;
-  const corpusRequired = annualIncomeRequired * ((1 - Math.pow(1 + realReturn, -yearsInRetirement)) / realReturn);
+  const calculateRetirementData = () => {
+    const i = inflation / 100;
+    const rPre = preRetirementReturn / 100;
+    const rPost = postRetirementReturn / 100;
+
+    const yearsToRetire = retirementAge - currentAge;
+    const retirementYears = lifeExpectancy - retirementAge;
+
+    if (yearsToRetire <= 0 || retirementYears <= 0) {
+      return {
+        annualIncomeRequired: 0,
+        totalCorpusRequired: 0,
+        monthlyInvestmentRequired: 0,
+        error: yearsToRetire <= 0 ? "Retirement age must be greater than current age." : "Life expectancy must be greater than retirement age."
+      };
+    }
+
+    const monthlyExpenseAtRetirement = monthlyIncome * Math.pow(1 + i, yearsToRetire);
+    const annualIncomeRequired = monthlyExpenseAtRetirement * 12;
+
+    let totalCorpusRequired;
+    if (Math.abs(rPost - i) < 1e-9) {
+      totalCorpusRequired = (annualIncomeRequired * retirementYears) / (1 + rPost);
+    } else {
+      totalCorpusRequired = annualIncomeRequired * ((1 - Math.pow((1 + i) / (1 + rPost), retirementYears)) / (rPost - i));
+    }
+
+    const futureValueExistingFund = existingFund * Math.pow(1 + rPre, yearsToRetire);
+    const corpusGap = Math.max(0, totalCorpusRequired - futureValueExistingFund);
+
+    const monthlyRate = Math.pow(1 + rPre, 1 / 12) - 1;
+    const totalMonths = yearsToRetire * 12;
+
+    let monthlyInvestmentRequired = 0;
+    if (corpusGap > 0) {
+      if (monthlyRate > 0) {
+        monthlyInvestmentRequired = (corpusGap * monthlyRate) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
+      } else {
+        monthlyInvestmentRequired = corpusGap / totalMonths;
+      }
+    }
+
+    return {
+      annualIncomeRequired,
+      totalCorpusRequired,
+      monthlyInvestmentRequired,
+      error: ""
+    };
+  };
+
+  const { annualIncomeRequired, totalCorpusRequired, monthlyInvestmentRequired, error } = calculateRetirementData();
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
@@ -351,7 +421,7 @@ const RetirementCalculator = ({ openModal }: { openModal: () => void }) => {
                 <Pie
                   data={[
                     { name: 'Annual Income Required', value: annualIncomeRequired },
-                    { name: 'Total Corpus Required', value: corpusRequired }
+                    { name: 'Total Corpus Required', value: totalCorpusRequired }
                   ]}
                   cx="50%"
                   cy="50%"
@@ -369,7 +439,7 @@ const RetirementCalculator = ({ openModal }: { openModal: () => void }) => {
             </ResponsiveContainer>
           </div>
           
-          <div className="w-full max-w-sm space-y-4 mb-8">
+          <div className="w-full max-w-sm space-y-4 mb-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-brand-blue rounded-full"></div>
@@ -382,9 +452,17 @@ const RetirementCalculator = ({ openModal }: { openModal: () => void }) => {
                 <div className="w-3 h-3 bg-brand-gold rounded-full"></div>
                 <span className="text-gray-500 text-sm">Total Corpus Required</span>
               </div>
-              <span className="font-semibold text-gray-900">{formatCurrency(corpusRequired)}</span>
+              <span className="font-semibold text-gray-900">{formatCurrency(totalCorpusRequired)}</span>
+            </div>
+            <div className="flex justify-between items-center border-t border-gray-100 pt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-gray-600 font-medium text-sm">Monthly Investment Required</span>
+              </div>
+              <span className="font-bold text-brand-blue">{formatCurrency(monthlyInvestmentRequired)}</span>
             </div>
           </div>
+          {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
         </div>
       </div>
     </div>
@@ -523,23 +601,23 @@ const SWPCalculator = ({ openModal }: { openModal: () => void }) => {
   const calculateSWP = () => {
     const n = swpType === 'monthly' ? duration * 12 : duration;
     const r = swpType === 'monthly' ? rateOfReturn / 12 / 100 : rateOfReturn / 100;
-    const totalWithdrawnAmount = swpAmount * n;
+    const totalWithdrawn = swpAmount * n;
     
     let calcFinalValue = 0;
     if (r === 0) {
-      calcFinalValue = investmentValue - totalWithdrawnAmount;
+      calcFinalValue = investmentValue - totalWithdrawn;
     } else {
       calcFinalValue = investmentValue * Math.pow(1 + r, n) - swpAmount * ((Math.pow(1 + r, n) - 1) / r);
     }
     
     const finalValue = Math.max(0, calcFinalValue);
     // If corpus depletes, interest calculation is an approximation for the simplified view
-    const totalInterest = Math.max(0, finalValue + totalWithdrawnAmount - investmentValue);
+    const totalInterest = Math.max(0, finalValue + totalWithdrawn - investmentValue);
     
-    return { finalValue, totalInterest };
+    return { finalValue, totalInterest, totalWithdrawn };
   };
 
-  const { finalValue, totalInterest } = calculateSWP();
+  const { finalValue, totalInterest, totalWithdrawn } = calculateSWP();
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
@@ -614,8 +692,8 @@ const SWPCalculator = ({ openModal }: { openModal: () => void }) => {
               <PieChart>
                 <Pie
                   data={[
-                    { name: 'Final Investment Value', value: Math.max(0, finalValue) },
-                    { name: 'Total Interest Earned', value: Math.max(0, totalInterest) }
+                    { name: 'Final Investment Value (after SWP/Withdrawal)', value: Math.max(0, finalValue) },
+                    { name: 'Total Investment Gain', value: Math.max(0, totalInterest) }
                   ]}
                   cx="50%"
                   cy="50%"
@@ -637,16 +715,23 @@ const SWPCalculator = ({ openModal }: { openModal: () => void }) => {
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-brand-blue rounded-full"></div>
-                <span className="text-gray-500 text-sm">Final Investment Value</span>
+                <span className="text-gray-500 text-sm">Final Investment Value (after SWP/Withdrawal)</span>
               </div>
               <span className="font-semibold text-gray-900">{formatCurrency(Math.max(0, finalValue))}</span>
             </div>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-brand-gold rounded-full"></div>
-                <span className="text-gray-500 text-sm">Total Interest Earned</span>
+                <span className="text-gray-500 text-sm">Total Investment Gain</span>
               </div>
               <span className="font-semibold text-gray-900">{formatCurrency(Math.max(0, totalInterest))}</span>
+            </div>
+            <div className="flex justify-between items-center border-t border-gray-100 pt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-gray-500 text-sm font-medium">Total Amount Withdrawn</span>
+              </div>
+              <span className="font-bold text-brand-blue">{formatCurrency(totalWithdrawn)}</span>
             </div>
           </div>
 

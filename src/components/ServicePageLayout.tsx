@@ -57,7 +57,7 @@ const SERVICES = [
   { path: '/services/pms-aif-sif', title: 'PMS / AIF / SIF' },
   { path: '/services/financial-planning', title: 'Financial Planning' },
   { path: '/services/mutual-funds', title: 'Mutual Funds' },
-  { path: '/services/equity-derivatives-slbm', title: 'Equity / Derivatives' },
+  { path: '/services/equity-derivatives-slbm', title: 'Equity / SLBM' },
   { path: '/services/life-insurance', title: 'Life Insurance' },
   { path: '/services/tax-saving-bonds', title: 'Bonds & FD' },
 ];
