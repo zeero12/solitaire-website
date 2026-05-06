@@ -9,28 +9,44 @@ const DEFAULT_AVAILABILITY = {
   blockedWeekdays: [0]
 };
 
-const getBookingSortKey = (booking: any) => {
+const getBookingTimestamp = (booking: any) => {
   const dateStr = booking.date || booking.preferred_date || '';
-  if (!dateStr) return '9999-99-999999';
+  if (!dateStr) return 8640000000000000; // Max date timestamp
   const timeStr = booking.time || booking.preferred_time || '';
   
   let hrs = 0, mins = 0;
   if (timeStr) {
     const match = timeStr.match(/(\d+):(\d+)(?:\s*(AM|PM))?/i);
     if (match) {
-      hrs = parseInt(match[1]);
-      mins = parseInt(match[2]);
-      if (match[3]) {
-        if (match[3].toUpperCase() === 'PM' && hrs < 12) hrs += 12;
-        if (match[3].toUpperCase() === 'AM' && hrs === 12) hrs = 0;
-      }
+      hrs = parseInt(match[1], 10);
+      mins = parseInt(match[2], 10);
+      const ampm = (match[3] || '').toUpperCase();
+      if (ampm === 'PM' && hrs < 12) hrs += 12;
+      else if (ampm === 'AM' && hrs === 12) hrs = 0;
     }
   }
   
-  const paddedHrs = String(hrs).padStart(2, '0');
-  const paddedMins = String(mins).padStart(2, '0');
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      return new Date(year, month, day, hrs, mins).getTime();
+    }
+  } catch (e) {
+    // Fallback to native parser
+  }
   
-  return `${dateStr}${paddedHrs}${paddedMins}`;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) {
+    // Fallback if Date parser fails: try to extract numbers
+    const match = dateStr.match(/(\d+)/);
+    if (match) return parseInt(match[1], 10) * 86400000 + hrs * 3600000 + mins * 60000;
+    return 8640000000000000;
+  }
+  d.setHours(hrs, mins, 0, 0);
+  return d.getTime();
 };
 
 export default function AdminDashboard() {
@@ -612,16 +628,24 @@ export default function AdminDashboard() {
                       return timeB - timeA;
                     } else if (bookingTab === 'confirmed') {
                       if (confirmedSortMode === 'earliest') {
-                        const valA = getBookingSortKey(a);
-                        const valB = getBookingSortKey(b);
-                        return valA.localeCompare(valB);
+                        return getBookingTimestamp(a) - getBookingTimestamp(b);
                       } else {
-                        const timeA = a.updated_at?.toMillis ? a.updated_at.toMillis() : 0;
-                        const timeB = b.updated_at?.toMillis ? b.updated_at.toMillis() : 0;
-                        return timeB - timeA;
+                        const getUpdateMs = (obj: any) => {
+                          if (!obj.updated_at) return 0;
+                          if (obj.updated_at.toMillis) return obj.updated_at.toMillis();
+                          if (typeof obj.updated_at === 'number') return obj.updated_at;
+                          return new Date(obj.updated_at).getTime() || 0;
+                        };
+                        return getUpdateMs(b) - getUpdateMs(a);
                       }
                     } else {
-                      return (b.updated_at?.toMillis ? b.updated_at.toMillis() : 0) - (a.updated_at?.toMillis ? a.updated_at.toMillis() : 0);
+                      const getUpdateMs = (obj: any) => {
+                        if (!obj.updated_at) return 0;
+                        if (obj.updated_at.toMillis) return obj.updated_at.toMillis();
+                        if (typeof obj.updated_at === 'number') return obj.updated_at;
+                        return new Date(obj.updated_at).getTime() || 0;
+                      };
+                      return getUpdateMs(b) - getUpdateMs(a);
                     }
                   })
                   .map((booking) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Outlet } from 'react-router-dom';
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Menu, Phone, Mail, Instagram, Linkedin, Shield, MapPin, Target, ShieldCheck, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import BookingModal from './components/BookingModal';
@@ -606,6 +606,14 @@ const Home = ({ openModal }: { openModal: () => void }) => (
   </>
 );
 
+const MainLayout = ({ openModal }: { openModal: () => void }) => (
+  <>
+    <Navbar openModal={openModal} />
+    <Outlet />
+    <Footer />
+  </>
+);
+
 export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -613,24 +621,23 @@ export default function App() {
     <Router>
       <ScrollToTop />
       <div className="min-h-screen bg-white font-sans text-gray-800">
-        <Navbar openModal={() => setIsModalOpen(true)} />
-        
         <Routes>
-          <Route path="/" element={<Home openModal={() => setIsModalOpen(true)} />} />
-          <Route path="/about" element={<AboutUs openModal={() => setIsModalOpen(true)} />} />
-          <Route path="/services/wealth-management" element={<WealthManagement openModal={() => setIsModalOpen(true)} />} />
-          <Route path="/services/pms-aif-sif" element={<PmsAifSif openModal={() => setIsModalOpen(true)} />} />
-          <Route path="/services/financial-planning" element={<FinancialPlanning openModal={() => setIsModalOpen(true)} />} />
-          <Route path="/services/mutual-funds" element={<MutualFunds openModal={() => setIsModalOpen(true)} />} />
-          <Route path="/services/equity-derivatives-slbm" element={<EquityDerivatives openModal={() => setIsModalOpen(true)} />} />
-          <Route path="/services/life-insurance" element={<LifeInsurance openModal={() => setIsModalOpen(true)} />} />
-          <Route path="/services/tax-saving-bonds" element={<BondsAndFd openModal={() => setIsModalOpen(true)} />} />
           <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/blog" element={<Blog />} />
+          
+          <Route element={<MainLayout openModal={() => setIsModalOpen(true)} />}>
+            <Route path="/" element={<Home openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/about" element={<AboutUs openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/services/wealth-management" element={<WealthManagement openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/services/pms-aif-sif" element={<PmsAifSif openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/services/financial-planning" element={<FinancialPlanning openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/services/mutual-funds" element={<MutualFunds openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/services/equity-derivatives-slbm" element={<EquityDerivatives openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/services/life-insurance" element={<LifeInsurance openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/services/tax-saving-bonds" element={<BondsAndFd openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/blog" element={<Blog />} />
+          </Route>
         </Routes>
 
-        <Footer />
-        
         <BookingModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       </div>
     </Router>
