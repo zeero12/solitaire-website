@@ -56,6 +56,7 @@ const Navbar = ({ openModal }: { openModal: () => void }) => (
             <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 border border-gray-100">
               <Link to="/#calculators" className="block px-4 py-2 text-gray-700 hover:bg-brand-light hover:text-brand-blue transition-colors">Calculators</Link>
               <Link to="/blog" className="block px-4 py-2 text-gray-700 hover:bg-brand-light hover:text-brand-blue transition-colors">Blog</Link>
+              <a href="https://www.money2management.com/Client/Login.aspx" target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-gray-700 hover:bg-brand-light hover:text-brand-blue transition-colors">Client Login</a>
             </div>
           </div>
 
@@ -383,8 +384,8 @@ const Services = () => {
     { title: "Financial Planning", desc: "A roadmap to achieve your life goals through disciplined financial management.", img: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=400&auto=format&fit=crop", link: "/services/financial-planning" },
     { title: "Mutual Funds", desc: "Curated fund portfolios across equity, debt, and hybrid categories to suit your goals.", img: "https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?q=80&w=400&auto=format&fit=crop", link: "/services/mutual-funds" },
     { title: "Equity / SLBM", desc: "Active market participation with access to equity, derivatives, and SLBM through a systematic approach", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=400&auto=format&fit=crop", link: "/services/equity-derivatives-slbm" },
-    { title: "Life Insurance", desc: "The right cover, chosen for the right reasons — built around your life, not a sales target.", img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=400&auto=format&fit=crop", link: "/services/life-insurance" },
     { title: "Bonds & FD", desc: "Preserve capital, earn predictable income, and choose fixed-income products with greater clarity.", img: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?q=80&w=400&auto=format&fit=crop", link: "/services/tax-saving-bonds" },
+    { title: "Life Insurance", desc: "The right cover, chosen for the right reasons — built around your life, not a sales target.", img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=400&auto=format&fit=crop", link: "/services/life-insurance" },
   ];
 
   return (
@@ -392,7 +393,7 @@ const Services = () => {
       <h2 className="text-3xl font-serif text-gray-900">Our Services</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item, i) => (
-          <Link to={item.link} key={i} className="relative flex flex-col justify-end rounded-xl overflow-hidden group cursor-pointer h-72 shadow-sm hover:shadow-xl transition-all duration-500">
+          <Link to={item.link} key={i} className={`relative flex flex-col justify-end rounded-xl overflow-hidden group cursor-pointer h-72 shadow-sm hover:shadow-xl transition-all duration-500 ${i === 6 ? 'lg:col-start-2' : ''}`}>
             {/* Background Image with Zoom Effect */}
             <img src={item.img} alt={item.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
             

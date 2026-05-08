@@ -13,7 +13,7 @@ export default function PmsAifSif({ openModal }: { openModal: () => void }) {
       introHeading="Beyond a certain level of wealth, diversification demands more than mutual funds can offer."
       introContent={
         <>
-          <p className="mb-4">You want more transparency, more customisation, and access to strategies beyond the retail fund universe.</p>
+          <p className="mb-4">You want more diversification, more customisation, and access to strategies beyond the retail fund universe.</p>
           <p>PMS, AIF, and SIF are built for exactly this stage. We help you figure out which one fits — and get you there without the jargon.</p>
         </>
       }

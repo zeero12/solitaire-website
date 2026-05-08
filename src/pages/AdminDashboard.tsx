@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Clock, Calendar, CalendarDays, User, Phone, Info, Shield, Bell, FileText, Plus, Trash2, LogOut, Edit2 } from 'lucide-react';
+import { CheckCircle2, Clock, Calendar, CalendarDays, User, Phone, Info, Shield, Bell, FileText, Plus, Trash2, LogOut, Edit2, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { subscribeToBookings, confirmBooking, completeBooking, markNoShow, cancelBooking, rescheduleBooking, adminLogin, adminLogout, onAuthChange, fetchBlogs, addBlog, updateBlog, deleteBlog, getAvailabilitySettings, saveAvailabilitySettings, addBlockedDate, removeBlockedDate } from '../firebase';
 
@@ -70,6 +70,7 @@ export default function AdminDashboard() {
   // Blog Form State
   const [showBlogForm, setShowBlogForm] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
+  const [blogToDelete, setBlogToDelete] = useState<string | null>(null);
   const [newBlog, setNewBlog] = useState({ title: '', excerpt: '', content: '', imageUrl: '' });
 
   // Availability State
@@ -282,7 +283,7 @@ export default function AdminDashboard() {
     if (editingBlogId) {
       const result = await updateBlog(editingBlogId, newBlog);
       if (result.success) {
-        setBlogs(blogs.map(b => 
+        setBlogs(prev => prev.map(b => 
           b.id === editingBlogId ? { ...b, ...newBlog } : b
         ));
         showNotification('Your modifications have been saved.', 'success', 'Blog Updated');
@@ -297,7 +298,7 @@ export default function AdminDashboard() {
       };
       const result = await addBlog(blogData);
       if (result.success) {
-        setBlogs([{ id: result.id, ...blogData }, ...blogs]);
+        setBlogs(prev => [{ id: result.id, ...blogData }, ...prev]);
         showNotification('The blog post is now live.', 'success', 'Blog Published');
       } else {
         showNotification(`Error: ${result.error}`, 'error', 'Publish Failed');
@@ -326,16 +327,20 @@ export default function AdminDashboard() {
     setShowBlogForm(false);
   };
 
-  const handleDeleteBlog = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this blog post?')) {
-      const result = await deleteBlog(id);
-      if (result.success) {
-        setBlogs(blogs.filter(b => b.id !== id));
-        showNotification('The blog post was removed from the system.', 'neutral', 'Blog Deleted');
-      } else {
-        showNotification(`Error: ${result.error}`, 'error', 'Delete Failed');
-      }
+  const handleDeleteBlog = (id: string) => {
+    setBlogToDelete(id);
+  };
+
+  const confirmDeleteBlog = async () => {
+    if (!blogToDelete) return;
+    const result = await deleteBlog(blogToDelete);
+    if (result.success) {
+      setBlogs(prev => prev.filter(b => b.id !== blogToDelete));
+      showNotification('The blog post was removed from the system.', 'neutral', 'Blog Deleted');
+    } else {
+      showNotification(`Error: ${result.error}`, 'error', 'Delete Failed');
     }
+    setBlogToDelete(null);
   };
 
   const normalizePhone = (phone: string) => {
@@ -530,9 +535,19 @@ export default function AdminDashboard() {
                 <span className="text-xs text-gray-500 uppercase tracking-wider font-medium text-center">Completed<br/>Total</span>
               </div>
             </div>
+            <a 
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 p-3 rounded-lg bg-white border border-gray-200 text-brand-blue hover:text-brand-blue hover:bg-brand-light transition-colors shadow-sm flex items-center gap-2 font-medium text-sm whitespace-nowrap"
+              title="Open Website"
+            >
+              <ExternalLink className="w-5 h-5" />
+              <span className="hidden sm:inline">View Website</span>
+            </a>
             <button 
               onClick={handleLogout}
-              className="ml-4 p-3 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 transition-colors shadow-sm"
+              className="ml-2 p-3 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 transition-colors shadow-sm"
               title="Logout"
             >
               <LogOut className="w-5 h-5" />
@@ -1141,6 +1156,45 @@ export default function AdminDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {blogToDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+            >
+              <h3 className="text-xl font-serif text-gray-900 mb-2">Delete Blog Post</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this blog post? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setBlogToDelete(null)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteBlog}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-medium transition-colors shadow-sm"
+                >
+                  Delete Post
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

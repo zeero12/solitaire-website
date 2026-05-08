@@ -778,12 +778,13 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
                         onChange={e => setForm({...form, purpose: e.target.value})}
                       >
                         <option value="">Select a topic</option>
-                        <option value="Financial Planning">Financial Planning</option>
-                        <option value="Mutual Fund Advisory">Mutual Fund Advisory</option>
                         <option value="Wealth Management">Wealth Management</option>
                         <option value="PMS / AIF / SIF">PMS / AIF / SIF</option>
-                        <option value="Tax Saving — 54EC Bonds">Tax Saving — 54EC Bonds</option>
-                        <option value="Equity / Derivatives / SLBM">Equity / Derivatives / SLBM</option>
+                        <option value="Financial Planning">Financial Planning</option>
+                        <option value="Mutual Funds">Mutual Funds</option>
+                        <option value="Equity / SLBM">Equity / SLBM</option>
+                        <option value="Bonds & FD">Bonds & FD</option>
+                        <option value="Life Insurance">Life Insurance</option>
                         <option value="Not sure yet">Not sure yet — I'd like guidance</option>
                       </select>
                     </div>

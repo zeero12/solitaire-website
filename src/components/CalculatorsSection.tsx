@@ -353,7 +353,7 @@ const RetirementCalculator = ({ openModal }: { openModal: () => void }) => {
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-sm font-medium text-gray-900">Monthly Income Required in Retirement Years</label>
+              <label className="text-sm font-medium text-gray-900">Monthly Income Required in Retirement Years (as of today)</label>
               <div className="flex items-center border border-gray-200 rounded px-2 py-1 w-32">
                 <span className="text-xs text-gray-500 mr-2">₹</span>
                 <FormattedNumberInput className="w-full text-right focus:outline-none text-sm font-semibold" value={monthlyIncome} onChange={setMonthlyIncome} min={10000} max={1000000} />
@@ -440,26 +440,26 @@ const RetirementCalculator = ({ openModal }: { openModal: () => void }) => {
           </div>
           
           <div className="w-full max-w-sm space-y-4 mb-4">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center p-3 bg-brand-light/30 rounded-lg">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-brand-blue rounded-full"></div>
                 <span className="text-gray-500 text-sm">Annual Income Required</span>
               </div>
               <span className="font-semibold text-gray-900">{formatCurrency(annualIncomeRequired)}</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center p-3 bg-brand-light/30 rounded-lg">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-brand-gold rounded-full"></div>
                 <span className="text-gray-500 text-sm">Total Corpus Required</span>
               </div>
               <span className="font-semibold text-gray-900">{formatCurrency(totalCorpusRequired)}</span>
             </div>
-            <div className="flex justify-between items-center border-t border-gray-100 pt-4">
+            <div className="flex justify-between items-center p-3 bg-brand-light/30 rounded-lg">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-gray-600 font-medium text-sm">Monthly Investment Required</span>
+                <span className="text-gray-500 text-sm">Monthly Investment Required</span>
               </div>
-              <span className="font-bold text-brand-blue">{formatCurrency(monthlyInvestmentRequired)}</span>
+              <span className="font-semibold text-gray-900">{formatCurrency(monthlyInvestmentRequired || 0)}</span>
             </div>
           </div>
           {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
@@ -578,7 +578,7 @@ const InflationCalculator = ({ openModal }: { openModal: () => void }) => {
 
 const SWPCalculator = ({ openModal }: { openModal: () => void }) => {
   const [swpType, setSwpType] = useState<'monthly' | 'yearly'>('monthly');
-  const [investmentValue, setInvestmentValue] = useState(2500000);
+  const [investmentValue, setInvestmentValue] = useState(10000000);
   const [swpAmount, setSwpAmount] = useState(25000);
   const [duration, setDuration] = useState(15);
   const [rateOfReturn, setRateOfReturn] = useState(8);
@@ -712,26 +712,26 @@ const SWPCalculator = ({ openModal }: { openModal: () => void }) => {
           </div>
           
           <div className="w-full space-y-4 mb-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center p-3 bg-white/50 rounded-lg">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-brand-blue rounded-full"></div>
-                <span className="text-gray-500 text-sm">Final Investment Value (after SWP/Withdrawal)</span>
+                <span className="text-gray-500 text-xs sm:text-sm leading-tight">Final Investment Value (after SWP)</span>
               </div>
-              <span className="font-semibold text-gray-900">{formatCurrency(Math.max(0, finalValue))}</span>
+              <span className="font-semibold text-gray-900 text-sm">{formatCurrency(Math.max(0, finalValue))}</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center p-3 bg-white/50 rounded-lg">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-brand-gold rounded-full"></div>
-                <span className="text-gray-500 text-sm">Total Investment Gain</span>
+                <span className="text-gray-500 text-xs sm:text-sm leading-tight">Total Investment Gain</span>
               </div>
-              <span className="font-semibold text-gray-900">{formatCurrency(Math.max(0, totalInterest))}</span>
+              <span className="font-semibold text-gray-900 text-sm">{formatCurrency(Math.max(0, totalInterest))}</span>
             </div>
-            <div className="flex justify-between items-center border-t border-gray-100 pt-4">
+            <div className="flex justify-between items-center p-3 bg-white/50 rounded-lg">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-gray-500 text-sm font-medium">Total Amount Withdrawn</span>
+                <span className="text-gray-500 text-xs sm:text-sm leading-tight">Total Amount Withdrawn</span>
               </div>
-              <span className="font-bold text-brand-blue">{formatCurrency(totalWithdrawn)}</span>
+              <span className="font-semibold text-gray-900 text-sm">{formatCurrency(totalWithdrawn || 0)}</span>
             </div>
           </div>
 
