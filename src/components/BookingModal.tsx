@@ -570,13 +570,13 @@ export default function BookingModal({ isOpen, onClose }: BookingModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }} 
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full h-full md:h-auto md:max-h-[90vh] md:w-[480px] bg-white md:rounded-xl shadow-2xl overflow-y-auto flex flex-col"
+            className="relative w-full h-[100dvh] md:h-auto md:max-h-[90vh] md:w-[480px] bg-white md:rounded-xl shadow-2xl overflow-y-auto flex flex-col"
           >
             <button onClick={handleClose} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-900 z-10 bg-white/80 rounded-full backdrop-blur-sm transition-colors">
               <X className="w-5 h-5" />
             </button>
             
-            <div className="p-6 md:p-8 flex-1 flex flex-col">
+            <div className="p-6 pb-24 md:p-8 md:pb-8 flex-1 flex flex-col">
               
               {step === 'form' && (
                 <>

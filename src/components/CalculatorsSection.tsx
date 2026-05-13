@@ -41,7 +41,6 @@ export const FormattedNumberInput = ({ value, onChange, min, max, className }: a
     let parsed = Number(localValue.replace(/,/g, ''));
     if (isNaN(parsed)) parsed = min || 0;
     if (min !== undefined && parsed < min) parsed = min;
-    if (max !== undefined && parsed > max) parsed = max;
     
     onChange(parsed);
     setLocalValue(parsed.toLocaleString('en-IN'));
@@ -97,16 +96,16 @@ const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <div className="space-y-8">
-          <div className="flex bg-brand-light/50 rounded-full p-1 w-max mb-6">
+          <div className="flex bg-gray-100 rounded-full p-1 w-max mb-6">
             <button 
               onClick={() => setType('sip')}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${type === 'sip' ? 'bg-brand-light text-brand-blue' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${type === 'sip' ? 'bg-[#1B2B5E] text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 bg-transparent'}`}
             >
               SIP
             </button>
             <button 
               onClick={() => setType('lumpsum')}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${type === 'lumpsum' ? 'bg-brand-light text-brand-blue' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${type === 'lumpsum' ? 'bg-[#1B2B5E] text-white shadow-sm' : 'text-gray-500 hover:text-gray-900 bg-transparent'}`}
             >
               Lumpsum
             </button>
@@ -122,7 +121,7 @@ const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
                   value={investment || 0}
                   onChange={setInvestment}
                   min={type === 'sip' ? 500 : 10000}
-                  max={type === 'sip' ? 10000000 : 100000000}
+                  max={100000000}
                 />
               </div>
             </div>
@@ -132,7 +131,7 @@ const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
               value={investment} 
               onChange={(e) => setInvestment(Number(e.target.value))}
               min={type === 'sip' ? 500 : 10000} 
-              max={type === 'sip' ? 10000000 : 100000000} 
+              max={100000000} 
               step={type === 'sip' ? 500 : 10000}
             />
           </div>
@@ -195,8 +194,8 @@ const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center">
-          <div className="w-64 h-64 mb-8">
+        <div className="flex flex-col items-center justify-center w-full mt-8 lg:mt-0">
+          <div className="w-56 h-56 sm:w-64 sm:h-64 mb-8">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -239,9 +238,9 @@ const SIPCalculator = ({ openModal }: { openModal: () => void }) => {
 
           <button 
             onClick={openModal}
-            className="w-48 bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+            className="w-full sm:w-48 bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors min-h-[44px]"
           >
-            INVEST NOW
+            Book a Free Consultation
           </button>
         </div>
       </div>
@@ -356,10 +355,10 @@ const RetirementCalculator = ({ openModal }: { openModal: () => void }) => {
               <label className="text-sm font-medium text-gray-900">Monthly Income Required in Retirement Years (as of today)</label>
               <div className="flex items-center border border-gray-200 rounded px-2 py-1 w-32">
                 <span className="text-xs text-gray-500 mr-2">₹</span>
-                <FormattedNumberInput className="w-full text-right focus:outline-none text-sm font-semibold" value={monthlyIncome} onChange={setMonthlyIncome} min={10000} max={1000000} />
+                <FormattedNumberInput className="w-full text-right focus:outline-none text-sm font-semibold" value={monthlyIncome} onChange={setMonthlyIncome} min={10000} max={100000000} />
               </div>
             </div>
-            <input type="range" className="w-full accent-brand-blue" value={monthlyIncome} onChange={e => setMonthlyIncome(Number(e.target.value))} min="10000" max="1000000" step="1000" />
+            <input type="range" className="w-full accent-brand-blue" value={monthlyIncome} onChange={e => setMonthlyIncome(Number(e.target.value))} min="10000" max="100000000" step="1000" />
           </div>
 
           <div>
@@ -400,22 +399,22 @@ const RetirementCalculator = ({ openModal }: { openModal: () => void }) => {
               <label className="text-sm font-medium text-gray-900">Existing Retirement Fund</label>
               <div className="flex items-center border border-gray-200 rounded px-2 py-1 w-32">
                 <span className="text-xs text-gray-500 mr-2">₹</span>
-                <FormattedNumberInput className="w-full text-right focus:outline-none text-sm font-semibold" value={existingFund} onChange={setExistingFund} min={0} max={200000000} />
+                <FormattedNumberInput className="w-full text-right focus:outline-none text-sm font-semibold" value={existingFund} onChange={setExistingFund} min={0} max={100000000} />
               </div>
             </div>
-            <input type="range" className="w-full accent-brand-blue" value={existingFund} onChange={e => setExistingFund(Number(e.target.value))} min="0" max="200000000" step="10000" />
+            <input type="range" className="w-full accent-brand-blue" value={existingFund} onChange={e => setExistingFund(Number(e.target.value))} min="0" max="100000000" step="10000" />
           </div>
 
           <button 
             onClick={openModal}
-            className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+            className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors min-h-[44px]"
           >
-            Want us to build a personalized plan around this?
+            Book a Free Consultation
           </button>
         </div>
 
-        <div className="flex flex-col items-center justify-center">
-          <div className="w-64 h-64 mb-8">
+        <div className="flex flex-col items-center justify-center w-full mt-8 lg:mt-0">
+          <div className="w-56 h-56 sm:w-64 sm:h-64 mb-8">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -488,10 +487,10 @@ const InflationCalculator = ({ openModal }: { openModal: () => void }) => {
               <label className="text-sm font-medium text-gray-900">Value of Current Expenses</label>
               <div className="flex items-center border border-gray-200 rounded px-2 py-1 w-32">
                 <span className="text-xs text-gray-500 mr-2">₹</span>
-                <FormattedNumberInput className="w-full text-right focus:outline-none text-sm font-semibold" value={currentExpenses} onChange={setCurrentExpenses} min={1000} max={1000000} />
+                <FormattedNumberInput className="w-full text-right focus:outline-none text-sm font-semibold" value={currentExpenses} onChange={setCurrentExpenses} min={1000} max={100000000} />
               </div>
             </div>
-            <input type="range" className="w-full accent-brand-blue" value={currentExpenses} onChange={e => setCurrentExpenses(Number(e.target.value))} min="1000" max="1000000" step="500" />
+            <input type="range" className="w-full accent-brand-blue" value={currentExpenses} onChange={e => setCurrentExpenses(Number(e.target.value))} min="1000" max="100000000" step="500" />
           </div>
 
           <div>
@@ -523,14 +522,14 @@ const InflationCalculator = ({ openModal }: { openModal: () => void }) => {
 
           <button 
             onClick={openModal}
-            className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+            className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors min-h-[44px]"
           >
-            PLAN FOR THIS GOAL
+            Book a Free Consultation
           </button>
         </div>
 
-        <div className="flex flex-col items-center justify-center">
-          <div className="w-64 h-64 mb-8">
+        <div className="flex flex-col items-center justify-center w-full mt-8 lg:mt-0">
+          <div className="w-56 h-56 sm:w-64 sm:h-64 mb-8">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -646,10 +645,10 @@ const SWPCalculator = ({ openModal }: { openModal: () => void }) => {
               <label className="text-sm font-medium text-gray-900">Investment Value</label>
               <div className="flex items-center border border-gray-200 rounded px-2 py-1 w-32">
                 <span className="text-xs text-gray-500 mr-2">₹</span>
-                <FormattedNumberInput className="w-full text-right focus:outline-none text-sm font-semibold" value={investmentValue} onChange={setInvestmentValue} min={50000} max={200000000} />
+                <FormattedNumberInput className="w-full text-right focus:outline-none text-sm font-semibold" value={investmentValue} onChange={setInvestmentValue} min={50000} max={100000000} />
               </div>
             </div>
-            <input type="range" className="w-full accent-brand-blue" value={investmentValue} onChange={e => setInvestmentValue(Number(e.target.value))} min="50000" max="200000000" step={investmentStep} />
+            <input type="range" className="w-full accent-brand-blue" value={investmentValue} onChange={e => setInvestmentValue(Number(e.target.value))} min="50000" max="100000000" step={investmentStep} />
           </div>
 
           <div>
@@ -686,8 +685,8 @@ const SWPCalculator = ({ openModal }: { openModal: () => void }) => {
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-6 flex flex-col items-center justify-center border border-gray-100">
-          <div className="w-64 h-64 mb-8">
+        <div className="bg-gray-50 rounded-lg p-6 flex flex-col items-center justify-center border border-gray-100 w-full mt-8 lg:mt-0">
+          <div className="w-56 h-56 sm:w-64 sm:h-64 mb-8">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -737,9 +736,9 @@ const SWPCalculator = ({ openModal }: { openModal: () => void }) => {
 
           <button 
             onClick={openModal}
-            className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+            className="w-full bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors min-h-[44px]"
           >
-            PLAN YOUR WITHDRAWALS
+            Book a Free Consultation
           </button>
         </div>
       </div>
@@ -794,31 +793,23 @@ const FDCalculator = ({ openModal }: { openModal: () => void }) => {
             <input type="range" className="w-full accent-brand-blue" value={years} onChange={e => setYears(Number(e.target.value))} min="0.25" max="10" step="0.25" />
           </div>
 
-          <div className="pt-6 space-y-4">
+          <div className="bg-brand-light rounded-lg p-5 mt-8 border border-brand-gold/10">
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Invested amount</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(investment)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">Est. returns</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(estReturns)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">Total value</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(totalValue)}</span>
+              <span className="text-gray-700 font-medium">Total Value</span>
+              <span className="text-2xl font-bold text-brand-blue">{formatCurrency(totalValue)}</span>
             </div>
           </div>
 
           <button 
             onClick={openModal}
-            className="w-40 bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors"
+            className="w-full sm:w-40 bg-brand-blue hover:bg-[#152a45] text-white py-3 rounded font-bold transition-colors min-h-[44px]"
           >
-            INVEST NOW
+            Book a Free Consultation
           </button>
         </div>
 
-        <div className="flex flex-col items-center justify-center">
-          <div className="w-64 h-64 mb-8">
+        <div className="flex flex-col items-center justify-center w-full mt-8 lg:mt-0">
+          <div className="w-56 h-56 sm:w-64 sm:h-64 mb-8">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -878,18 +869,18 @@ export default function CalculatorsSection({ openModal }: { openModal: () => voi
   return (
     <div id="calculators" className="space-y-8 scroll-mt-24">
       <div className="text-center">
-        <h2 className="text-3xl font-serif text-gray-900 mb-2">Financial Calculators</h2>
-        <h3 className="text-xl text-gray-600 font-serif italic">Plan your financial future</h3>
+        <h2 className="text-3xl sm:text-4xl font-serif text-gray-900 mb-2">Financial Calculators</h2>
+        <h3 className="text-xl sm:text-2xl text-gray-600 font-serif italic">Plan your financial future</h3>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-2 mb-8">
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+            className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 min-h-[44px] ${
               activeTab === tab 
-                ? 'bg-brand-blue text-white shadow-md transform scale-105' 
+                ? 'bg-brand-blue text-white shadow-md transform sm:scale-105' 
                 : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-gold hover:text-brand-gold'
             }`}
           >

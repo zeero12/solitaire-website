@@ -109,7 +109,7 @@ export default function PmsAifSif({ openModal }: { openModal: () => void }) {
         }
       ]}
       
-      ctaText="Speak to an Advisor"
+      ctaText="Book a Free Consultation"
       openModal={openModal}
     />
   );

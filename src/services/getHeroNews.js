@@ -9,7 +9,7 @@ const FALLBACK_CARDS = [
     category: 'Guide',
     title: 'How Section 54EC Bonds Can Eliminate Your Capital Gains Tax',
     summary: 'Sold a property? You have a 6-month window to legally save your entire LTCG tax liability.',
-    articleUrl: '/services/tax-saving-bonds',
+    articleUrl: '/services/bonds-and-fd',
     source: 'Solitaire Financial Solutions',
     imageUrl: null,
     publishedAt: new Date().toISOString()
@@ -29,7 +29,7 @@ const FALLBACK_CARDS = [
     category: 'Explainer',
     title: 'What is SLBM and How Long-Term Investors Can Earn From It',
     summary: 'Your idle holdings can generate additional income without selling a single share.',
-    articleUrl: '/services/equity-derivatives-slbm',
+    articleUrl: '/services/equity-slbm',
     source: 'Solitaire Financial Solutions',
     imageUrl: null,
     publishedAt: new Date().toISOString()

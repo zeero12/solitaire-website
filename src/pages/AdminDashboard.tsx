@@ -618,15 +618,18 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[900px] text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 text-sm text-gray-600 uppercase tracking-wider">
                   <th className="px-6 py-4 font-medium">Client Details</th>
                   <th className="px-6 py-4 font-medium">Requested Slot</th>
                   <th className="px-6 py-4 font-medium">Purpose</th>
                   <th className="px-6 py-4 font-medium">Status</th>
-                  <th className="px-6 py-4 font-medium text-right">Actions</th>
+                  {/* FIX 4: Removed Actions column from History tab */}
+                  {bookingTab !== 'history' && (
+                    <th className="px-6 py-4 font-medium text-right">Actions</th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -726,11 +729,13 @@ export default function AdminDashboard() {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex flex-col items-end gap-2">
+                    {/* FIX 4: Removed Actions column from History tab */}
+                    {bookingTab !== 'history' && (
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex flex-col items-end gap-2">
 
-                        {/* STATUS: new or Pending */}
-                        {(booking.status === 'new' || booking.status === 'Pending') && (
+                          {/* STATUS: new or Pending */}
+                          {(booking.status === 'new' || booking.status === 'Pending') && (
                           <>
                             <div className="flex items-center gap-2">
                               <button
@@ -881,11 +886,13 @@ export default function AdminDashboard() {
 
                       </div>
                     </td>
+                    )}
                   </tr>
                 )})}
                 {bookings.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    {/* FIX 4: Removed Actions column from History tab */}
+                    <td colSpan={bookingTab === 'history' ? 4 : 5} className="px-6 py-12 text-center text-gray-500">
                       No bookings found.
                     </td>
                   </tr>

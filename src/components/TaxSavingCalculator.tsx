@@ -100,7 +100,7 @@ const TaxSavingCalculator = ({ openModal }: { openModal: () => void }) => {
               <p className="text-sm text-blue-800">Standard deduction of ₹75,000 (New Regime) or ₹50,000 (Old Regime) will be automatically applied to your salary income.</p>
             </div>
             <div className="flex justify-end pt-4">
-              <button onClick={() => setStep(2)} className="bg-brand-blue hover:bg-[#152a45] text-white px-6 py-2.5 rounded-md font-medium transition-colors">
+              <button onClick={() => setStep(2)} className="bg-brand-blue hover:bg-[#152a45] text-white px-6 py-2.5 rounded-md font-medium transition-colors w-full sm:w-auto min-h-[44px]">
                 Next: Deductions
               </button>
             </div>
@@ -185,11 +185,11 @@ const TaxSavingCalculator = ({ openModal }: { openModal: () => void }) => {
               )}
             </div>
 
-            <div className="flex justify-between pt-4">
-              <button onClick={() => setStep(1)} className="text-gray-600 hover:text-gray-900 px-4 py-2 font-medium">
+            <div className="flex flex-col sm:flex-row justify-between pt-4 gap-4">
+              <button onClick={() => setStep(1)} className="text-gray-600 hover:text-gray-900 border border-gray-300 sm:border-transparent px-4 py-2 font-medium w-full sm:w-auto min-h-[44px] rounded-md text-center">
                 Back
               </button>
-              <button onClick={() => setStep(3)} className="bg-brand-blue hover:bg-[#152a45] text-white px-6 py-2.5 rounded-md font-medium transition-colors">
+              <button onClick={() => setStep(3)} className="bg-brand-blue hover:bg-[#152a45] text-white px-6 py-2.5 rounded-md font-medium transition-colors w-full sm:w-auto min-h-[44px]">
                 Calculate Tax
               </button>
             </div>
@@ -299,14 +299,14 @@ const TaxSavingCalculator = ({ openModal }: { openModal: () => void }) => {
               <p className="text-xs text-gray-400 italic">Disclaimer: This is an estimate based on FY 2025-26 / AY 2026-27 rules and not tax filing or legal advice.</p>
               
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <button onClick={() => { setStep(1); setSalary(1200000); setOtherIncome(0); setSec80C(0); setSec80CCD(0); setSec80D(0); setHra(0); setHomeLoanInterest(0); setOtherDeductions(0); }} className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors">
+                <button onClick={() => { setStep(1); setSalary(1200000); setOtherIncome(0); setSec80C(0); setSec80CCD(0); setSec80D(0); setHra(0); setHomeLoanInterest(0); setOtherDeductions(0); }} className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors w-full sm:w-auto min-h-[44px]">
                   Recalculate
                 </button>
                 <button 
                   onClick={openModal}
-                  className="bg-brand-gold hover:bg-[#b08d4a] text-white px-6 py-2.5 rounded-md font-medium transition-colors shadow-sm"
+                  className="bg-brand-gold hover:bg-[#b08d4a] text-white px-6 py-2.5 rounded-md font-medium transition-colors shadow-sm w-full sm:w-auto min-h-[44px]"
                 >
-                  Book a Tax Planning Call
+                  Book a Free Consultation
                 </button>
               </div>
               <p className="text-sm font-medium text-brand-blue pt-2">Talk to Solitaire Financial Solutions</p>

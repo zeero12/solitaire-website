@@ -8,7 +8,8 @@ export default function EquityDerivatives({ openModal }: { openModal: () => void
       heroTitle="Equity / SLBM"
       heroSubtitle="Active market participation — with strategy, discipline, and expert guidance."
       heroEyebrow="DIRECT MARKET PARTICIPATION"
-      heroImage="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80"
+      heroImage="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&q=80"
+      heroOverlayClassName="bg-black/[0.55]"
       
       introHeading="Direct market participation offers control and return potential."
       introContent={
@@ -112,7 +113,7 @@ export default function EquityDerivatives({ openModal }: { openModal: () => void
         }
       ]}
       
-      ctaText="Speak to Us About Equity Strategies"
+      ctaText="Book a Free Consultation"
       openModal={openModal}
     />
   );

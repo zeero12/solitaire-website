@@ -102,7 +102,7 @@ export default function MutualFunds({ openModal }: { openModal: () => void }) {
         }
       ]}
       
-      ctaText="Get a Free Portfolio Review"
+      ctaText="Book a Free Consultation"
       openModal={openModal}
     />
   );

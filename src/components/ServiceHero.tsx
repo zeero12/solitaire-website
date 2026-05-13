@@ -7,8 +7,8 @@ export default function ServiceHero({ title, subtitle, subtitleClassName }: { ti
         <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80" alt="Background" className="w-full h-full object-cover" />
       </div>
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-white mb-6">{title}</h1>
-        <p className={`text-xl font-serif italic max-w-3xl mx-auto ${subtitleClassName || 'text-brand-gold'}`}>{subtitle}</p>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif text-white mb-6">{title}</h1>
+        <p className={`text-lg sm:text-xl md:text-2xl font-serif italic max-w-3xl mx-auto ${subtitleClassName || 'text-brand-gold'}`}>{subtitle}</p>
       </div>
     </div>
   );

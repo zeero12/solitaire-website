@@ -67,7 +67,7 @@ export default function AboutUs({ openModal }: { openModal: () => void }) {
         <ServiceCTA 
           title="Ready to take a structured, long-term view of your financial future?"
           subtitle="Let's start a conversation."
-          text="Book a Free Discovery Call" 
+          text="Book a Free Consultation" 
           openModal={openModal} 
         />
       </div>

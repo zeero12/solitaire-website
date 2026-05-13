@@ -105,7 +105,7 @@ export default function BondsAndFd({ openModal }: { openModal: () => void }) {
       
       ctaTitle="Choose fixed-income products with more clarity — and fewer blind spots."
       ctaSubtitle="Book a no-obligation conversation with Solitaire to evaluate which bond or FD options make sense for your goals, liquidity needs, and risk profile."
-      ctaText="Book a Free Call"
+      ctaText="Book a Free Consultation"
       openModal={openModal}
     >
       {/* Explanatory / Education Section */}

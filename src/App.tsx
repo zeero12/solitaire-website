@@ -25,59 +25,106 @@ const NavItem = ({ to, children }: { to: string, children: React.ReactNode }) =>
   </Link>
 );
 
-const Navbar = ({ openModal }: { openModal: () => void }) => (
-  <nav className="absolute top-0 w-full z-50 bg-transparent text-white border-b border-white/20">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex justify-between items-center h-20">
-        <div className="flex-shrink-0 flex items-center">
-          <Link to="/" className="flex items-center gap-3 group">
-            <img 
-              src="https://drive.google.com/thumbnail?id=1CLmU5Po2DbqliZJ62tvKRlidQ2TouDDU&sz=w1000" 
-              alt="Solitaire Financial Solutions Logo" 
-              className="h-14 w-auto object-contain"
-            />
-            <span className="font-serif text-xl md:text-2xl font-bold tracking-wider group-hover:text-brand-gold transition-colors hidden sm:block">
-              Solitaire Financial Solutions
-            </span>
-          </Link>
-        </div>
-        <div className="hidden md:flex items-center space-x-1 text-sm font-medium">
-          <NavItem to="/">Home</NavItem>
-          <NavItem to="/about">About Us</NavItem>
-          <NavItem to="/#services">Services</NavItem>
-          
-          <div className="relative group/nav">
-            <button className="relative px-4 py-2 transition-all duration-300 ease-in-out rounded-md flex items-center gap-1">
-              <span className="absolute inset-0 bg-white rounded-md opacity-0 scale-95 group-hover/nav:opacity-100 group-hover/nav:scale-100 transition-all duration-300 ease-in-out shadow-sm"></span>
-              <span className="relative z-10 text-white group-hover/nav:text-brand-gold transition-colors duration-300 ease-in-out flex items-center gap-1">
-                Resources <ChevronDown className="w-4 h-4"/>
+const Navbar = ({ openModal }: { openModal: () => void }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  return (
+    <nav className="absolute top-0 w-full z-50 bg-transparent text-white border-b border-white/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
+          <div className="flex-shrink-0 flex items-center">
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 group z-50 relative">
+              <img 
+                src="https://drive.google.com/thumbnail?id=1CLmU5Po2DbqliZJ62tvKRlidQ2TouDDU&sz=w1000" 
+                alt="Solitaire Financial Solutions Logo" 
+                className="h-10 sm:h-14 w-auto object-contain"
+              />
+              <span className="font-serif text-lg sm:text-xl md:text-2xl font-bold tracking-wider group-hover:text-brand-gold transition-colors block">
+                Solitaire Financial Solutions
               </span>
-            </button>
-            <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 border border-gray-100">
-              <Link to="/#calculators" className="block px-4 py-2 text-gray-700 hover:bg-brand-light hover:text-brand-blue transition-colors">Calculators</Link>
-              <Link to="/blog" className="block px-4 py-2 text-gray-700 hover:bg-brand-light hover:text-brand-blue transition-colors">Blog</Link>
-              <a href="https://www.money2management.com/Client/Login.aspx" target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-gray-700 hover:bg-brand-light hover:text-brand-blue transition-colors">Client Login</a>
+            </Link>
+          </div>
+          <div className="hidden lg:flex items-center space-x-1 text-sm font-medium">
+            <NavItem to="/">Home</NavItem>
+            <NavItem to="/about">About Us</NavItem>
+            <NavItem to="/#services">Services</NavItem>
+            
+            <div className="relative group/nav">
+              <button className="relative px-4 py-2 transition-all duration-300 ease-in-out rounded-md flex items-center gap-1">
+                <span className="absolute inset-0 bg-white rounded-md opacity-0 scale-95 group-hover/nav:opacity-100 group-hover/nav:scale-100 transition-all duration-300 ease-in-out shadow-sm"></span>
+                <span className="relative z-10 text-white group-hover/nav:text-brand-gold transition-colors duration-300 ease-in-out flex items-center gap-1">
+                  Resources <ChevronDown className="w-4 h-4"/>
+                </span>
+              </button>
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible transition-all duration-200 border border-gray-100">
+                <Link to="/#calculators" className="block px-4 py-2 text-gray-700 hover:bg-brand-light hover:text-brand-blue transition-colors">Calculators</Link>
+                <Link to="/blog" className="block px-4 py-2 text-gray-700 hover:bg-brand-light hover:text-brand-blue transition-colors">Blog</Link>
+                <a href="https://www.money2management.com/Client/Login.aspx" target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-gray-700 hover:bg-brand-light hover:text-brand-blue transition-colors">Client Login</a>
+              </div>
+            </div>
+
+            <NavItem to="/#contact">Contact</NavItem>
+            
+            <div className="pl-2">
+              <button onClick={openModal} className="relative px-6 py-2 group transition-all duration-300 ease-in-out rounded-md border border-white/30 bg-white/10 hover:border-transparent">
+                <span className="absolute inset-0 bg-white rounded-md opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 ease-in-out shadow-md"></span>
+                <span className="relative z-10 text-white group-hover:text-brand-gold transition-colors duration-300 ease-in-out font-medium">
+                  Book a Free Consultation
+                </span>
+              </button>
             </div>
           </div>
-
-          <NavItem to="/#contact">Contact</NavItem>
-          
-          <div className="pl-2">
-            <button onClick={openModal} className="relative px-6 py-2 group transition-all duration-300 ease-in-out rounded-md border border-white/30 bg-white/10 hover:border-transparent">
-              <span className="absolute inset-0 bg-white rounded-md opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 ease-in-out shadow-md"></span>
-              <span className="relative z-10 text-white group-hover:text-brand-gold transition-colors duration-300 ease-in-out font-medium">
-                Book a Free Consultation
-              </span>
+          <div className="lg:hidden flex items-center z-50 relative">
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 -mr-2 text-white hover:text-brand-gold transition-colors"
+              aria-label="Toggle menu"
+            >
+              <Menu className="w-6 h-6" />
             </button>
           </div>
         </div>
-        <div className="md:hidden flex items-center">
-          <Menu className="w-6 h-6" />
-        </div>
       </div>
-    </div>
-  </nav>
-);
+
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-full left-0 w-full bg-brand-blue border-b border-white/10 shadow-xl lg:hidden flex flex-col"
+          >
+            <div className="px-4 py-6 space-y-4 flex flex-col">
+              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-brand-gold font-medium px-4 py-2">Home</Link>
+              <Link to="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-brand-gold font-medium px-4 py-2">About Us</Link>
+              <Link to="/#services" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-brand-gold font-medium px-4 py-2">Services</Link>
+              <div className="px-4 py-2 space-y-3">
+                <div className="text-white/70 font-medium uppercase text-xs tracking-wider">Resources</div>
+                <div className="pl-4 space-y-3 flex flex-col">
+                  <Link to="/#calculators" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-brand-gold">Calculators</Link>
+                  <Link to="/blog" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-brand-gold">Blog</Link>
+                  <a href="https://www.money2management.com/Client/Login.aspx" target="_blank" rel="noopener noreferrer" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-brand-gold">Client Login</a>
+                </div>
+              </div>
+              <Link to="/#contact" onClick={() => setIsMobileMenuOpen(false)} className="text-white hover:text-brand-gold font-medium px-4 py-2">Contact</Link>
+              <div className="px-4 pt-4 border-t border-white/10">
+                <button 
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    openModal();
+                  }} 
+                  className="w-full bg-brand-gold hover:bg-[#b08d4f] text-white px-6 py-3 rounded-sm font-medium transition-colors"
+                >
+                  Book a Free Consultation
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </nav>
+  );
+};
 
 const Hero = ({ openModal }: { openModal: () => void }) => {
   const [news, setNews] = useState<any[]>([]);
@@ -91,7 +138,7 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
   useEffect(() => {
     const updateCardsToShow = () => {
       if (window.innerWidth < 768) setCardsToShow(1);
-      else if (window.innerWidth < 1024) setCardsToShow(2);
+      else if (window.innerWidth < 1280) setCardsToShow(2);
       else setCardsToShow(3);
     };
     updateCardsToShow();
@@ -173,7 +220,7 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
   const visibleSequence = Array.from({ length: cardsToShow }, (_, i) => currentIndex + i);
 
   return (
-    <div className="relative h-[80vh] min-h-[600px] flex items-center justify-center">
+    <div className="relative h-[80vh] min-h-[650px] sm:min-h-[600px] flex items-center justify-center pb-12 sm:pb-0">
       <div className="absolute inset-0 z-0">
         <img
           src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop"
@@ -183,18 +230,18 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
         <div className="absolute inset-0 bg-black/50"></div>
       </div>
       
-      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mt-16">
-        <h1 className="text-5xl md:text-6xl font-serif text-white font-medium mb-6 leading-tight">
+      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mt-16 sm:mt-20">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-white font-medium mb-4 sm:mb-6 leading-tight">
           Your Trusted Partner in<br/>Wealth Management
         </h1>
-        <p className="text-lg md:text-xl text-gray-200 mb-10 max-w-3xl mx-auto font-light">
+        <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-8 sm:mb-10 max-w-3xl mx-auto font-light">
           With over <strong className="font-semibold text-white">25+ years of experience</strong>, we help <strong className="font-semibold text-white">400+ families</strong> achieve financial freedom through personalized investment strategies and expert guidance.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button onClick={openModal} className="bg-brand-gold hover:bg-[#b08d4f] text-white px-8 py-3 rounded-sm font-medium transition-colors w-full sm:w-auto">
-            Book a Free Discovery Call
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full px-4 sm:px-0">
+          <button onClick={openModal} className="bg-brand-gold hover:bg-[#b08d4f] text-white px-8 py-3.5 sm:py-3 rounded-sm font-medium transition-colors w-full sm:w-auto text-center min-h-[44px]">
+            Book a Free Consultation
           </button>
-          <Link to="/about" className="relative px-8 py-3 group transition-all duration-300 ease-in-out rounded-md flex items-center justify-center gap-2 w-full sm:w-auto overflow-hidden">
+          <Link to="/about" className="relative px-8 py-3.5 sm:py-3 group transition-all duration-300 ease-in-out rounded-md flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px] overflow-hidden border border-white/30 sm:border-transparent">
             <span className="absolute inset-0 bg-white rounded-md opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 ease-in-out shadow-sm"></span>
             <span className="relative z-10 text-white group-hover:text-brand-gold transition-colors duration-300 ease-in-out font-medium flex items-center gap-2">
               See How We Work <ArrowRight className="w-4 h-4" />
@@ -209,7 +256,7 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        <div className="max-w-5xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="relative group">
             <div className="bg-brand-blue/90 backdrop-blur-sm p-4 rounded-sm border border-white/10 shadow-xl overflow-hidden relative min-h-[110px] flex items-center justify-center h-full">
               {/* Progress Bar */}
@@ -245,10 +292,16 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
                         <motion.a
                           layout
                           key={seqIdx}
-                          href={item.articleUrl}
+                          href={item.articleUrl || '#'}
+                          onClick={(e) => {
+                            if (item.articleUrl && item.articleUrl !== '#') {
+                              e.preventDefault();
+                              window.open(item.articleUrl, '_blank', 'noopener,noreferrer');
+                            }
+                          }}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-4 bg-white/5 p-3 rounded cursor-pointer hover:bg-white/10 transition-colors w-full group/card flex-shrink-0"
+                          className="flex items-center gap-4 bg-white/5 p-3 rounded cursor-pointer hover:bg-white/15 hover:ring-1 hover:ring-brand-gold/40 transition-all duration-300 w-full group/card flex-shrink-0"
                           style={{
                             width: `calc((100% - ${(cardsToShow - 1) * 16}px) / ${cardsToShow})`
                           }}
@@ -341,37 +394,38 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
 };
 
 const WhoWeAre = () => (
-  <div className="space-y-8">
+  <div className="space-y-16">
     <div className="text-center">
-      <h2 className="text-3xl font-serif text-gray-900 mb-2">Our Philosophy</h2>
-      <h3 className="text-xl text-brand-gold font-serif italic">25+ Years of Excellence</h3>
+      <div className="w-12 h-1 bg-brand-gold mx-auto mb-6 rounded-full"></div>
+      <h2 className="text-3xl sm:text-5xl font-serif text-brand-blue mb-2">Our Philosophy</h2>
+      <h3 className="text-xl sm:text-2xl text-brand-gold font-serif italic">25+ Years of Excellence</h3>
     </div>
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
       {/* Tile 1 */}
-      <div className="group bg-white p-8 rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
-        <div className="w-16 h-16 bg-brand-light rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-white/20 transition-colors duration-300">
-          <Target className="w-8 h-8 text-brand-gold group-hover:text-white transition-colors duration-300" />
+      <div className="group bg-white p-10 py-12 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
+        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-8 group-hover:bg-white/20 transition-all duration-500 shadow-inner">
+          <Target strokeWidth={1.5} className="w-9 h-9 text-brand-gold group-hover:text-white transition-colors duration-500" />
         </div>
-        <h4 className="font-bold text-gray-900 mb-3 group-hover:text-white transition-colors duration-300 uppercase tracking-wide text-sm">Our Philosophy</h4>
-        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-300">Structured & disciplined investment approach.</p>
+        <h4 className="font-bold text-brand-blue mb-4 group-hover:text-white transition-colors duration-500 uppercase tracking-widest text-sm sm:text-base">Our Philosophy</h4>
+        <p className="text-sm sm:text-base text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-500 max-w-[280px]">Structured & disciplined investment approach.</p>
       </div>
       
       {/* Tile 2 */}
-      <div className="group bg-white p-8 rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
-        <div className="w-16 h-16 bg-brand-light rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-white/20 transition-colors duration-300">
-          <ShieldCheck className="w-8 h-8 text-brand-gold group-hover:text-white transition-colors duration-300" />
+      <div className="group bg-white p-10 py-12 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
+        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-8 group-hover:bg-white/20 transition-all duration-500 shadow-inner">
+          <ShieldCheck strokeWidth={1.5} className="w-9 h-9 text-brand-gold group-hover:text-white transition-colors duration-500" />
         </div>
-        <h4 className="font-bold text-gray-900 mb-3 group-hover:text-white transition-colors duration-300 uppercase tracking-wide text-sm">Our Commitment</h4>
-        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-300">Client oriented, ethical & transparent practices.</p>
+        <h4 className="font-bold text-brand-blue mb-4 group-hover:text-white transition-colors duration-500 uppercase tracking-widest text-sm sm:text-base">Our Commitment</h4>
+        <p className="text-sm sm:text-base text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-500 max-w-[280px]">Client oriented, ethical & transparent practices.</p>
       </div>
       
       {/* Tile 3 */}
-      <div className="group bg-white p-8 rounded-2xl border border-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
-        <div className="w-16 h-16 bg-brand-light rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-white/20 transition-colors duration-300">
-          <TrendingUp className="w-8 h-8 text-brand-gold group-hover:text-white transition-colors duration-300" />
+      <div className="group bg-white p-10 py-12 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
+        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-8 group-hover:bg-white/20 transition-all duration-500 shadow-inner">
+          <TrendingUp strokeWidth={1.5} className="w-9 h-9 text-brand-gold group-hover:text-white transition-colors duration-500" />
         </div>
-        <h4 className="font-bold text-gray-900 mb-3 group-hover:text-white transition-colors duration-300 uppercase tracking-wide text-sm">Our Approach</h4>
-        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-300">Comprehensive investment solutions under one roof.</p>
+        <h4 className="font-bold text-brand-blue mb-4 group-hover:text-white transition-colors duration-500 uppercase tracking-widest text-sm sm:text-base">Our Approach</h4>
+        <p className="text-sm sm:text-base text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-500 max-w-[280px]">Comprehensive investment solutions under one roof.</p>
       </div>
     </div>
   </div>
@@ -380,17 +434,17 @@ const WhoWeAre = () => (
 const Services = () => {
   const items = [
     { title: "Wealth Management", desc: "Grow, protect and transfer your wealth with a structured, long term strategy.", img: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop", link: "/services/wealth-management" },
-    { title: "PMS / AIF / SIF", desc: "Sophisticated investment vehicles managed by experienced portfolio managers.", img: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=400&auto=format&fit=crop", link: "/services/pms-aif-sif" },
+    { title: "PMS / AIF / SIF", desc: "Sophisticated investment vehicles managed by experienced portfolio managers.", img: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=400&auto=format&fit=crop", link: "/services/pms-aif-sif" },
     { title: "Financial Planning", desc: "A roadmap to achieve your life goals through disciplined financial management.", img: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=400&auto=format&fit=crop", link: "/services/financial-planning" },
     { title: "Mutual Funds", desc: "Curated fund portfolios across equity, debt, and hybrid categories to suit your goals.", img: "https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?q=80&w=400&auto=format&fit=crop", link: "/services/mutual-funds" },
-    { title: "Equity / SLBM", desc: "Active market participation with access to equity, derivatives, and SLBM through a systematic approach", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=400&auto=format&fit=crop", link: "/services/equity-derivatives-slbm" },
-    { title: "Bonds & FD", desc: "Preserve capital, earn predictable income, and choose fixed-income products with greater clarity.", img: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?q=80&w=400&auto=format&fit=crop", link: "/services/tax-saving-bonds" },
+    { title: "Equity / SLBM", desc: "Active market participation with access to equity, derivatives, and SLBM through a systematic approach", img: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=400&auto=format&fit=crop", link: "/services/equity-slbm" },
+    { title: "Bonds & FD", desc: "Preserve capital, earn predictable income, and choose fixed-income products with greater clarity.", img: "https://images.unsplash.com/photo-1554224154-26032ffc0d07?q=80&w=400&auto=format&fit=crop", link: "/services/bonds-and-fd" },
     { title: "Life Insurance", desc: "The right cover, chosen for the right reasons — built around your life, not a sales target.", img: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=400&auto=format&fit=crop", link: "/services/life-insurance" },
   ];
 
   return (
     <div id="services" className="space-y-6 scroll-mt-24">
-      <h2 className="text-3xl font-serif text-gray-900">Our Services</h2>
+      <h2 className="text-3xl sm:text-4xl font-serif text-gray-900 mb-6">Our Services</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item, i) => (
           <Link to={item.link} key={i} className={`relative flex flex-col justify-end rounded-xl overflow-hidden group cursor-pointer h-72 shadow-sm hover:shadow-xl transition-all duration-500 ${i === 6 ? 'lg:col-start-2' : ''}`}>
@@ -458,28 +512,52 @@ const Quote = () => (
 );
 
 const Testimonials = () => (
-  <div className="space-y-6">
+  <div className="space-y-6 !mt-12">
     <h2 className="text-3xl font-serif text-gray-900">What Our Customers Say</h2>
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div className="bg-white border border-gray-100 p-5 rounded shadow-sm hover:shadow-md transition-shadow flex flex-col">
+        <div className="flex gap-[2px] mb-3 text-[#C9A84C] text-[16px] leading-none">
+          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+        </div>
         <p className="text-sm text-gray-600 mb-4 italic flex-grow">"Solitaire Financial Solutions has always provided me high quality service and brokerage relatively low cost. I would like to thank Vishal and the Solitaire team for consistently high-quality service and support."</p>
-        <div>
-          <div className="font-semibold text-gray-900 text-sm">Mr. Dipesh</div>
-          <div className="text-xs text-gray-500">CEO</div>
+        <div className="flex items-center">
+          <div className="w-10 h-10 rounded-full bg-[#1B2B5E] flex items-center justify-center text-white text-[14px] font-semibold mr-3 shrink-0">
+            MD
+          </div>
+          <div>
+            <div className="font-semibold text-gray-900 text-sm">Mr. Dipesh</div>
+            <div className="text-xs text-gray-500">CEO</div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-[#1B2B5E] border-[1.5px] border-[#C9A84C] p-5 rounded shadow-sm hover:shadow-md transition-shadow flex flex-col">
+        <div className="flex gap-[2px] mb-3 text-[#C9A84C] text-[16px] leading-none">
+          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+        </div>
+        <p className="text-sm text-white mb-4 italic flex-grow">"Their structured and disciplined approach has helped me achieve my financial goals much faster than I expected. Highly recommended."</p>
+        <div className="flex items-center">
+          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#1B2B5E] text-[14px] font-semibold mr-3 shrink-0">
+            PS
+          </div>
+          <div>
+            <div className="font-semibold text-white text-sm">Priya Sharma</div>
+            <div className="text-xs text-white">Entrepreneur</div>
+          </div>
         </div>
       </div>
       <div className="bg-white border border-gray-100 p-5 rounded shadow-sm hover:shadow-md transition-shadow flex flex-col">
-        <p className="text-sm text-gray-600 mb-4 italic flex-grow">"Their structured and disciplined approach has helped me achieve my financial goals much faster than I expected. Highly recommended."</p>
-        <div>
-          <div className="font-semibold text-gray-900 text-sm">Priya Sharma</div>
-          <div className="text-xs text-gray-500">Entrepreneur</div>
+        <div className="flex gap-[2px] mb-3 text-[#C9A84C] text-[16px] leading-none">
+          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
         </div>
-      </div>
-      <div className="bg-white border border-gray-100 p-5 rounded shadow-sm hover:shadow-md transition-shadow flex flex-col">
         <p className="text-sm text-gray-600 mb-4 italic flex-grow">"The team's commitment to ethical and transparent practices gives me peace of mind. I trust them completely with my family's financial future."</p>
-        <div>
-          <div className="font-semibold text-gray-900 text-sm">Rahul Verma</div>
-          <div className="text-xs text-gray-500">IT Professional</div>
+        <div className="flex items-center">
+          <div className="w-10 h-10 rounded-full bg-[#1B2B5E] flex items-center justify-center text-white text-[14px] font-semibold mr-3 shrink-0">
+            RV
+          </div>
+          <div>
+            <div className="font-semibold text-gray-900 text-sm">Rahul Verma</div>
+            <div className="text-xs text-gray-500">IT Professional</div>
+          </div>
         </div>
       </div>
     </div>
@@ -487,18 +565,18 @@ const Testimonials = () => (
 );
 
 const CallToAction = ({ openModal }: { openModal: () => void }) => (
-  <div className="bg-brand-light rounded-lg overflow-hidden flex flex-col sm:flex-row items-center">
-    <div className="p-8 sm:w-1/2">
-      <h2 className="text-3xl font-serif text-gray-900 mb-4">Not Sure Where to Start?</h2>
-      <p className="text-sm text-gray-600 mb-6">
+  <div className="bg-brand-light rounded-xl overflow-hidden flex flex-col md:flex-row items-stretch shadow-sm">
+    <div className="p-8 sm:p-12 md:p-16 lg:p-20 md:w-1/2 flex flex-col justify-center items-start">
+      <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-gray-900 mb-4 sm:mb-6">Not Sure Where to Start?</h2>
+      <p className="text-base sm:text-lg text-gray-600 mb-8 sm:mb-10 leading-relaxed">
         Not sure where your financial journey should begin? Our team will understand your goals, assess your current situation and map out the right path — no obligation, no sales pitch.
       </p>
-      <button onClick={openModal} className="bg-brand-blue hover:bg-[#152a45] text-white px-6 py-2.5 rounded font-medium transition-colors">
-        Book a Free Call
+      <button onClick={openModal} className="bg-brand-blue hover:bg-[#152a45] text-white px-8 py-3.5 sm:py-4 rounded font-medium transition-colors w-full sm:w-auto min-h-[48px] text-base md:text-lg">
+        Book a Free Consultation
       </button>
     </div>
-    <div className="sm:w-1/2 h-full min-h-[250px]">
-      <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop" alt="Team meeting" className="w-full h-full object-cover" />
+    <div className="md:w-1/2 h-72 sm:h-80 md:h-auto min-h-[300px] md:min-h-[450px] relative">
+      <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=1000&auto=format&fit=crop" alt="Team meeting" className="absolute inset-0 w-full h-full object-cover" />
     </div>
   </div>
 );
@@ -509,7 +587,7 @@ const Footer = () => (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
         <div className="lg:col-span-1">
           <h3 className="text-xl font-serif font-bold mb-6">Solitaire Main Office</h3>
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 mb-8">
             <a href="https://maps.app.goo.gl/wvUdYFK4U7bQx2Kh7" target="_blank" rel="noopener noreferrer" className="mt-1 text-brand-gold hover:text-white transition-colors flex-shrink-0">
               <MapPin className="w-5 h-5" />
             </a>
@@ -521,30 +599,42 @@ const Footer = () => (
               Surat - 394510
             </p>
           </div>
-        </div>
-        
-        <div className="lg:col-span-1">
-          <h3 className="text-lg font-semibold mb-6">Quick Links</h3>
+
+          <h3 className="text-sm font-semibold mb-4 text-white uppercase tracking-wider">Follow Us</h3>
           <div className="flex gap-4">
-            <a href="https://www.instagram.com/solitaire_financial_solution/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-gold transition-colors">
+            <a href="https://www.instagram.com/solitaire_financial_solution/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-gold transition-colors text-gray-300">
               <Instagram className="w-6 h-6" />
             </a>
-            <a href="https://www.linkedin.com/company/solitaire-financial-solutions/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-gold transition-colors">
+            <a href="https://www.linkedin.com/company/solitaire-financial-solutions/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-gold transition-colors text-gray-300">
               <Linkedin className="w-6 h-6" />
             </a>
           </div>
         </div>
+        
+        <div className="lg:col-span-1">
+          <h3 className="text-lg font-semibold mb-6">Quick Links</h3>
+          <ul className="space-y-3 text-sm text-gray-300">
+            <li><Link to="/" className="hover:text-white transition-colors block">Home</Link></li>
+            <li><Link to="/about" className="hover:text-white transition-colors block">About Us</Link></li>
+            <li><Link to="/services/mutual-funds" className="hover:text-white transition-colors block">Mutual Funds</Link></li>
+            <li><Link to="/services/financial-planning" className="hover:text-white transition-colors block">Financial Planning</Link></li>
+            <li><Link to="/services/equity-slbm" className="hover:text-white transition-colors block">Equity / SLBM</Link></li>
+            <li><Link to="/services/life-insurance" className="hover:text-white transition-colors block">Life Insurance</Link></li>
+            <li><Link to="/services/bonds-and-fd" className="hover:text-white transition-colors block">Bonds & FD</Link></li>
+            <li><Link to="/#contact" className="hover:text-white transition-colors block">Contact</Link></li>
+          </ul>
+        </div>
 
         <div className="lg:col-span-1">
-          <h3 className="text-lg font-semibold mb-6">Contact Us</h3>
+          <h3 className="text-lg font-semibold mb-4 lg:mb-6">Contact Us</h3>
           <ul className="space-y-3 text-sm text-gray-300">
-            <li className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" /> 
+            <li className="flex items-start sm:items-center gap-2">
+              <Phone className="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5 sm:mt-0" /> 
               <span>+91 99094 51144, +91 261 2784278</span>
             </li>
             <li className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-brand-gold flex-shrink-0" /> 
-              <a href="mailto:solitairequeries@gmail.com" className="hover:text-white transition-colors">solitairequeries@gmail.com</a>
+              <a href="mailto:solitairequeries@gmail.com" className="hover:text-white transition-colors truncate">solitairequeries@gmail.com</a>
             </li>
           </ul>
         </div>
@@ -579,12 +669,7 @@ const Footer = () => (
             AMFI Registered Mutual Fund Distributor | Registered with SEBI as Authorised Person of R WADIWALA SECURITIES PVT LTD | Mutual fund investments are subject to market risks. Please read all scheme-related documents carefully before investing.
           </p>
         </div>
-        <div className="flex flex-col md:flex-row justify-between items-center w-full gap-4 text-xs text-gray-400">
-          <div className="flex gap-4">
-            <Link to="/admin" className="hover:text-white transition-colors flex items-center gap-1.5 font-medium">
-              <Shield className="w-3.5 h-3.5" /> ADMIN DASHBOARD
-            </Link>
-          </div>
+        <div className="flex flex-col items-center w-full gap-4 text-xs text-gray-400">
           <p>Copyright 2026 Solitaire Financial Solutions. All Rights Reserved.</p>
         </div>
       </div>
@@ -632,9 +717,9 @@ export default function App() {
             <Route path="/services/pms-aif-sif" element={<PmsAifSif openModal={() => setIsModalOpen(true)} />} />
             <Route path="/services/financial-planning" element={<FinancialPlanning openModal={() => setIsModalOpen(true)} />} />
             <Route path="/services/mutual-funds" element={<MutualFunds openModal={() => setIsModalOpen(true)} />} />
-            <Route path="/services/equity-derivatives-slbm" element={<EquityDerivatives openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/services/equity-slbm" element={<EquityDerivatives openModal={() => setIsModalOpen(true)} />} />
             <Route path="/services/life-insurance" element={<LifeInsurance openModal={() => setIsModalOpen(true)} />} />
-            <Route path="/services/tax-saving-bonds" element={<BondsAndFd openModal={() => setIsModalOpen(true)} />} />
+            <Route path="/services/bonds-and-fd" element={<BondsAndFd openModal={() => setIsModalOpen(true)} />} />
             <Route path="/blog" element={<Blog />} />
           </Route>
         </Routes>

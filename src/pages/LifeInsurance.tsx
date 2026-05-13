@@ -90,7 +90,7 @@ export default function LifeInsurance({ openModal }: { openModal: () => void }) 
         }
       ]}
       
-      ctaText="Book a Free Discovery Call"
+      ctaText="Book a Free Consultation"
       openModal={openModal}
     />
   );

@@ -107,7 +107,7 @@ export default function FinancialPlanning({ openModal }: { openModal: () => void
         }
       ]}
       
-      ctaText="Start Your Financial Plan"
+      ctaText="Book a Free Consultation"
       openModal={openModal}
     />
   );
