@@ -72,12 +72,12 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 // ─── App Initialization ───────────────────────────────────────
 const firebaseConfig = {
-  apiKey: "AIzaSyB_jCps5CpO0t7yt6pYHrdgBmjcNXwDr_Q",
-  authDomain: "solitaire-financial.firebaseapp.com",
-  projectId: "solitaire-financial",
-  storageBucket: "solitaire-financial.firebasestorage.app",
-  messagingSenderId: "908254636324",
-  appId: "1:908254636324:web:a197a33824951694ed6bb1"
+  apiKey: "AIzaSyBCoa29ziERvVbtOo9C6r3aC3Lwpl9RMFI",
+  authDomain: "solitaire-financial-d7931.firebaseapp.com",
+  projectId: "solitaire-financial-d7931",
+  storageBucket: "solitaire-financial-d7931.firebasestorage.app",
+  messagingSenderId: "923575646591",
+  appId: "1:923575646591:web:6431b7994afc45c4ca824a"
 };
 
 // Initialize Firebase with provided config or fallbacks

@@ -394,38 +394,38 @@ const Hero = ({ openModal }: { openModal: () => void }) => {
 };
 
 const WhoWeAre = () => (
-  <div className="space-y-16">
+  <div className="space-y-12">
     <div className="text-center">
-      <div className="w-12 h-1 bg-brand-gold mx-auto mb-6 rounded-full"></div>
-      <h2 className="text-3xl sm:text-5xl font-serif text-brand-blue mb-2">Our Philosophy</h2>
+      <div className="w-8 h-1 bg-brand-gold mx-auto mb-6 rounded-full"></div>
+      <h2 className="text-3xl sm:text-4xl font-serif text-brand-blue mb-2">Our Philosophy</h2>
       <h3 className="text-xl sm:text-2xl text-brand-gold font-serif italic">25+ Years of Excellence</h3>
     </div>
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
       {/* Tile 1 */}
-      <div className="group bg-white p-10 py-12 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
-        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-8 group-hover:bg-white/20 transition-all duration-500 shadow-inner">
-          <Target strokeWidth={1.5} className="w-9 h-9 text-brand-gold group-hover:text-white transition-colors duration-500" />
+      <div className="group bg-white p-8 rounded-2xl border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
+        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6 group-hover:bg-white/20 transition-all duration-500">
+          <Target strokeWidth={1.5} className="w-8 h-8 text-brand-gold group-hover:text-white transition-colors duration-500" />
         </div>
-        <h4 className="font-bold text-brand-blue mb-4 group-hover:text-white transition-colors duration-500 uppercase tracking-widest text-sm sm:text-base">Our Philosophy</h4>
-        <p className="text-sm sm:text-base text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-500 max-w-[280px]">Structured & disciplined investment approach.</p>
+        <h4 className="font-bold text-gray-900 mb-3 group-hover:text-white transition-colors duration-500 uppercase tracking-wide text-sm">Our Philosophy</h4>
+        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-500">Structured & disciplined investment approach.</p>
       </div>
       
       {/* Tile 2 */}
-      <div className="group bg-white p-10 py-12 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
-        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-8 group-hover:bg-white/20 transition-all duration-500 shadow-inner">
-          <ShieldCheck strokeWidth={1.5} className="w-9 h-9 text-brand-gold group-hover:text-white transition-colors duration-500" />
+      <div className="group bg-white p-8 rounded-2xl border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
+        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6 group-hover:bg-white/20 transition-all duration-500">
+          <ShieldCheck strokeWidth={1.5} className="w-8 h-8 text-brand-gold group-hover:text-white transition-colors duration-500" />
         </div>
-        <h4 className="font-bold text-brand-blue mb-4 group-hover:text-white transition-colors duration-500 uppercase tracking-widest text-sm sm:text-base">Our Commitment</h4>
-        <p className="text-sm sm:text-base text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-500 max-w-[280px]">Client oriented, ethical & transparent practices.</p>
+        <h4 className="font-bold text-gray-900 mb-3 group-hover:text-white transition-colors duration-500 uppercase tracking-wide text-sm">Our Commitment</h4>
+        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-500">Client oriented, ethical & transparent practices.</p>
       </div>
       
       {/* Tile 3 */}
-      <div className="group bg-white p-10 py-12 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
-        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-8 group-hover:bg-white/20 transition-all duration-500 shadow-inner">
-          <TrendingUp strokeWidth={1.5} className="w-9 h-9 text-brand-gold group-hover:text-white transition-colors duration-500" />
+      <div className="group bg-white p-8 rounded-2xl border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:bg-brand-gold flex flex-col items-center text-center cursor-pointer">
+        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6 group-hover:bg-white/20 transition-all duration-500">
+          <TrendingUp strokeWidth={1.5} className="w-8 h-8 text-brand-gold group-hover:text-white transition-colors duration-500" />
         </div>
-        <h4 className="font-bold text-brand-blue mb-4 group-hover:text-white transition-colors duration-500 uppercase tracking-widest text-sm sm:text-base">Our Approach</h4>
-        <p className="text-sm sm:text-base text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-500 max-w-[280px]">Comprehensive investment solutions under one roof.</p>
+        <h4 className="font-bold text-gray-900 mb-3 group-hover:text-white transition-colors duration-500 uppercase tracking-wide text-sm">Our Approach</h4>
+        <p className="text-sm text-gray-600 leading-relaxed group-hover:text-white/90 transition-colors duration-500">Comprehensive investment solutions under one roof.</p>
       </div>
     </div>
   </div>
